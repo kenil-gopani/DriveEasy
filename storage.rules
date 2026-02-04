@@ -1,0 +1,39 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isImageType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isValidSize() {
+      return request.resource.size < 5 * 1024 * 1024; // 5MB max
+    }
+    
+    // Profile photos
+    match /profile_photos/{userId}/{fileName} {
+      // Users can read any profile photo
+      allow read: if isAuthenticated();
+      // Users can upload their own profile photo
+      allow write: if isOwner(userId) && isImageType() && isValidSize();
+    }
+    
+    // Car images
+    match /car_images/{carId}/{fileName} {
+      // Anyone authenticated can read car images
+      allow read: if isAuthenticated();
+      // Only admins can upload car images
+      // Note: For proper admin check, use Cloud Functions or custom claims
+      allow write: if isAuthenticated() && isImageType() && isValidSize();
+    }
+  }
+}

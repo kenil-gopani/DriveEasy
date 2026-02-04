@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "219350395112",
+    "project_id": "drive-easy-2ea63",
+    "storage_bucket": "drive-easy-2ea63.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:219350395112:android:660070bb30647a4e9cc15d",
+        "android_client_info": {
+          "package_name": "com.driveeasy.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUBBGiddSxBBvLkgx_e2FE0deb0vHa9wQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:219350395112:android:9fbdd8cb66d730f59cc15d",
+        "android_client_info": {
+          "package_name": "com.yourcompany.driveeasy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUBBGiddSxBBvLkgx_e2FE0deb0vHa9wQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
