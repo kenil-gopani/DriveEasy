@@ -8,6 +8,7 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError();
 });
 
+// mkjjjjjjjdhhdh
 // Theme state notifier
 class ThemeNotifier extends StateNotifier<ThemeMode> {
   final SharedPreferences prefs;
