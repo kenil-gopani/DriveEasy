@@ -68,6 +68,7 @@ class AppRoutes {
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
+  final currentUser = ref.watch(currentUserProvider).valueOrNull;
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
@@ -81,6 +82,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == AppRoutes.phoneLogin ||
           state.matchedLocation == AppRoutes.onboarding;
       final isSplash = state.matchedLocation == AppRoutes.splash;
+      final isCompleteProfile =
+          state.matchedLocation == AppRoutes.completeProfile;
 
       // Don't redirect from splash - let it handle its own logic
       if (isSplash) return null;
@@ -90,9 +93,27 @@ final routerProvider = Provider<GoRouter>((ref) {
         return AppRoutes.login;
       }
 
-      // If logged in and trying to access auth routes
-      if (isLoggedIn && isAuthRoute) {
-        return AppRoutes.home;
+      // If logged in
+      if (isLoggedIn) {
+        // Redirect away from auth routes
+        if (isAuthRoute) {
+          // Check if profile is complete
+          if (currentUser != null && !currentUser.profileComplete) {
+            return AppRoutes.completeProfile;
+          }
+          // Role-based home redirection
+          if (currentUser != null && currentUser.isAdmin) {
+            return AppRoutes.adminDashboard;
+          }
+          return AppRoutes.home;
+        }
+
+        // If profile incomplete and not on complete profile page
+        if (currentUser != null &&
+            !currentUser.profileComplete &&
+            !isCompleteProfile) {
+          return AppRoutes.completeProfile;
+        }
       }
 
       return null;

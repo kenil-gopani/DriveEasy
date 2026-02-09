@@ -27,6 +27,15 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     super.initState();
     _pickupDate = DateTime.now().add(const Duration(days: 1));
     _dropDate = DateTime.now().add(const Duration(days: 3));
+
+    // Set initial dates in booking provider after frame completes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_pickupDate != null && _dropDate != null) {
+        ref
+            .read(bookingNotifierProvider.notifier)
+            .setDates(pickupDate: _pickupDate!, dropDate: _dropDate!);
+      }
+    });
   }
 
   Future<void> _selectDate(BuildContext context, bool isPickup) async {

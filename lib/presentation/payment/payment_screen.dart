@@ -40,13 +40,33 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   ];
 
   Future<void> _processPayment() async {
-    if (_selectedMethod == null) return;
+    if (_selectedMethod == null) {
+      Helpers.showSnackBar(
+        context,
+        'Please select a payment method',
+        isError: true,
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
     try {
       final userId = ref.read(currentUserProvider).valueOrNull?.uid;
       if (userId == null) throw Exception('Please login again');
+
+      final bookingState = ref.read(bookingNotifierProvider);
+
+      // Validate booking state
+      if (bookingState.carId == null) {
+        throw Exception('No car selected. Please go back and select a car.');
+      }
+      if (bookingState.pickupDate == null || bookingState.dropDate == null) {
+        throw Exception('Please select pickup and drop-off dates.');
+      }
+      if (bookingState.pickupLocation == null) {
+        throw Exception('Please select a pickup location.');
+      }
 
       ref
           .read(bookingNotifierProvider.notifier)
@@ -162,7 +182,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Secure payment powered by RentCarPro',
+                    'Secure payment powered by Drive Easy',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],

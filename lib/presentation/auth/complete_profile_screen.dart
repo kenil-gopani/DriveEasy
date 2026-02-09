@@ -24,6 +24,7 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  String _selectedRole = 'user'; // 'user' or 'owner'
 
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
@@ -82,6 +83,7 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
       final updatedUser = user.copyWith(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
+        role: _selectedRole,
         profileComplete: true,
         updatedAt: DateTime.now(),
       );
@@ -105,6 +107,83 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
 
   void _skipForNow() {
     context.go(AppRoutes.home);
+  }
+
+  Widget _buildRoleOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String value,
+  }) {
+    final isSelected = _selectedRole == value;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedRole = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.1)
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.primary.withOpacity(0.2)
+                    : AppColors.background,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            if (isSelected) ...[
+              const SizedBox(height: 8),
+              const Icon(
+                Icons.check_circle,
+                color: AppColors.primary,
+                size: 20,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -247,6 +326,37 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
                           }
                           return null;
                         },
+                      ),
+                      const SizedBox(height: 24),
+                      // Role Selection
+                      Text(
+                        'I want to',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildRoleOption(
+                              icon: Icons.directions_car_outlined,
+                              title: 'Rent Cars',
+                              subtitle: 'Find and book cars',
+                              value: 'user',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildRoleOption(
+                              icon: Icons.car_rental_outlined,
+                              title: 'List My Car',
+                              subtitle: 'Become a car owner',
+                              value: 'owner',
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 32),
                       // Complete Profile Button

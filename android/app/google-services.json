@@ -12,7 +12,20 @@
           "package_name": "com.driveeasy.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "219350395112-9mfj08l1vsdorp2r49rd6rlc2u7hsbv8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.driveeasy.app",
+            "certificate_hash": "5df5b0d6f1869c4a38ab9cd7550b4d088f36bfb2"
+          }
+        },
+        {
+          "client_id": "219350395112-uso5akm9it148ke25hmrtpad35i5qfla.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDUBBGiddSxBBvLkgx_e2FE0deb0vHa9wQ"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "219350395112-uso5akm9it148ke25hmrtpad35i5qfla.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     },
@@ -31,7 +49,12 @@
           "package_name": "com.yourcompany.driveeasy"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "219350395112-uso5akm9it148ke25hmrtpad35i5qfla.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDUBBGiddSxBBvLkgx_e2FE0deb0vHa9wQ"
@@ -39,7 +62,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "219350395112-uso5akm9it148ke25hmrtpad35i5qfla.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

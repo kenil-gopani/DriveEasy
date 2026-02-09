@@ -136,6 +136,18 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
       rethrow;
     }
   }
+
+  // Google Sign-In
+  Future<void> signInWithGoogle() async {
+    state = const AsyncValue.loading();
+    try {
+      final user = await _authDatasource.signInWithGoogle();
+      state = AsyncValue.data(user);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      rethrow;
+    }
+  }
 }
 
 final authNotifierProvider =

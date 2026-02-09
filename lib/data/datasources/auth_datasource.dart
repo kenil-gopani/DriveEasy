@@ -1,10 +1,19 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/user_model.dart';
 
 class AuthDatasource {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    // Client ID is required for web platform
+    clientId: kIsWeb
+        ? '230143979477-47s1sdfm0lp44k5m6aga16b85035dld0.apps.googleusercontent.com'
+        : null,
+  );
 
   User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -66,6 +75,12 @@ class AuthDatasource {
   }
 
   Future<void> signOut() async {
+    // Sign out from Google as well
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Ignore Google sign-out errors
+    }
     await _auth.signOut();
   }
 
@@ -117,6 +132,90 @@ class AuthDatasource {
         return 'Invalid credentials. Please check your email and password.';
       default:
         return e.message ?? 'An authentication error occurred.';
+    }
+  }
+
+  // Google Sign-In
+  Future<UserModel> signInWithGoogle() async {
+    try {
+      UserCredential userCredential;
+
+      if (kIsWeb) {
+        // For Web: Use Firebase's native signInWithPopup (more reliable)
+        final googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+
+        userCredential = await _auth.signInWithPopup(googleProvider);
+      } else {
+        // For Mobile: Use google_sign_in package
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+        if (googleUser == null) {
+          throw 'Google sign-in was cancelled';
+        }
+
+        // Obtain the auth details from the request
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+
+        // Create a new credential
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        // Sign in to Firebase with the Google credential
+        userCredential = await _auth.signInWithCredential(credential);
+      }
+
+      final uid = userCredential.user!.uid;
+      final email = userCredential.user!.email ?? '';
+      final displayName =
+          userCredential.user!.displayName ?? email.split('@').first;
+      final photoUrl = userCredential.user!.photoURL;
+
+      // Check if user exists in Firestore
+      final doc = await _firestore.collection('users').doc(uid).get();
+
+      if (doc.exists) {
+        // Update profile photo if available and changed
+        if (photoUrl != null) {
+          final existingUser = UserModel.fromMap(doc.data()!);
+          if (existingUser.photoUrl != photoUrl) {
+            await _firestore.collection('users').doc(uid).update({
+              'photoUrl': photoUrl,
+              'updatedAt': DateTime.now().toIso8601String(),
+            });
+          }
+        }
+        final updatedDoc = await _firestore.collection('users').doc(uid).get();
+        return UserModel.fromMap(updatedDoc.data()!);
+      }
+
+      // Create new user if first time (Google sign-in)
+      final user = UserModel(
+        uid: uid,
+        name: displayName,
+        email: email,
+        phone: '',
+        role: 'user',
+        photoUrl: photoUrl ?? '',
+        profileComplete: false, // Mark as incomplete for Google signups
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      await _firestore.collection('users').doc(uid).set(user.toMap());
+      return user;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      if (e.toString().contains('cancelled') ||
+          e.toString().contains('popup-closed')) {
+        throw 'Google sign-in was cancelled';
+      }
+      throw 'Failed to sign in with Google. Please try again.';
     }
   }
 

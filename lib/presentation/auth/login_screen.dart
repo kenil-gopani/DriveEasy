@@ -80,6 +80,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+      if (mounted) {
+        context.go(AppRoutes.home);
+      }
+    } catch (e) {
+      if (mounted) {
+        final message = e.toString();
+        if (!message.contains('cancelled')) {
+          Helpers.showSnackBar(context, message, isError: true);
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,7 +148,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       // App Name
                       Center(
                         child: Text(
-                          'RentCarPro',
+                          'Drive Easy',
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 color: AppColors.primary,
@@ -253,17 +275,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         onTap: () => context.push(AppRoutes.phoneLogin),
                       ),
                       const SizedBox(height: 12),
-                      // Google login button (placeholder)
+                      // Google login button
                       _buildSocialButton(
                         icon: Icons.g_mobiledata_rounded,
                         label: 'Continue with Google',
                         color: AppColors.accent,
-                        onTap: () {
-                          Helpers.showSnackBar(
-                            context,
-                            'Google sign-in coming soon!',
-                          );
-                        },
+                        onTap: _signInWithGoogle,
                       ),
                     ],
                   ),

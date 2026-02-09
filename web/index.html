@@ -19,19 +19,23 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="RentCarPro - Premium Car Rental App">
+  <meta name="description" content="Drive Easy - Luxury Car Rental App">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Google Sign-In Client ID -->
+  <meta name="google-signin-client_id"
+    content="230143979477-47s1sdfm0lp44k5m6aga16b85035dld0.apps.googleusercontent.com">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="RentCarPro">
+  <meta name="apple-mobile-web-app-title" content="Drive Easy">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>RentCarPro</title>
+  <title>Drive Easy</title>
   <link rel="manifest" href="manifest.json">
 
   <!-- Firebase SDKs for web -->
@@ -64,27 +68,18 @@
       }
     }
 
-    /* Hide reCAPTCHA badge */
+    /* Hide reCAPTCHA badge - keep functional but hidden visually */
     .grecaptcha-badge {
-      visibility: hidden !important;
       opacity: 0 !important;
-      position: absolute !important;
-      right: -9999px !important;
+      pointer-events: none !important;
     }
 
-    /* Hide reCAPTCHA container */
+    /* reCAPTCHA container - keep accessible for Firebase */
     #recaptcha-container {
-      position: absolute !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      left: -9999px !important;
-    }
-
-    /* Hide any reCAPTCHA iframe that might appear */
-    iframe[src*="recaptcha"] {
-      visibility: hidden !important;
-      position: absolute !important;
-      left: -9999px !important;
+      position: fixed !important;
+      bottom: 0 !important;
+      right: 0 !important;
+      z-index: 9999 !important;
     }
   </style>
 </head>

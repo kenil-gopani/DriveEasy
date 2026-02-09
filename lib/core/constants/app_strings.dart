@@ -1,7 +1,7 @@
 class AppStrings {
   // App Info
-  static const String appName = 'RentCarPro';
-  static const String appTagline = 'Your Premium Car Rental Partner';
+  static const String appName = 'Drive Easy';
+  static const String appTagline = 'Car Rental';
 
   // Onboarding
   static const String onboarding1Title = 'Wide Car Selection';
