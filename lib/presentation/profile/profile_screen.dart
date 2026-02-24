@@ -21,9 +21,12 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       body: user.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, __) => const Center(child: Text('Error loading profile')),
         data: (userData) {
           if (userData == null) {
-            return const Center(child: Text('Please login'));
+            // Still resolving – show spinner while stream settles
+            return const Center(child: CircularProgressIndicator());
           }
           return CustomScrollView(
             slivers: [
@@ -409,8 +412,6 @@ class ProfileScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('Error loading profile')),
       ),
     );
   }
