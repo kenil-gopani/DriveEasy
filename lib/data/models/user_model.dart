@@ -23,7 +23,7 @@ class UserModel {
     required this.phone,
     this.photoUrl = '',
     this.role = 'user',
-    this.profileComplete = true,
+    this.profileComplete = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -36,7 +36,7 @@ class UserModel {
       phone: map['phone'] ?? '',
       photoUrl: map['photoUrl'] ?? '',
       role: map['role'] ?? 'user',
-      profileComplete: map['profileComplete'] ?? true,
+      profileComplete: map['profileComplete'] ?? false,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );

@@ -55,7 +55,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           );
       if (mounted) {
         Helpers.showSnackBar(context, 'Account created successfully!');
-        context.go(AppRoutes.home);
+        // Router will automatically redirect based on profileComplete flag
+        context.go(AppRoutes.completeProfile);
       }
     } catch (e) {
       if (mounted) {

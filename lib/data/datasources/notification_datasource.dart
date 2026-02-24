@@ -54,6 +54,20 @@ class NotificationDatasource {
     await _notificationsCollection.doc(notificationId).delete();
   }
 
+  /// Builds a booking confirmed notification model (does NOT save it).
+  NotificationModel buildBookingNotification(String userId, String carName) {
+    return NotificationModel(
+      id: '',
+      userId: userId,
+      title: 'Booking Confirmed! 🎉',
+      message:
+          'Your booking for $carName has been confirmed. Have a great ride!',
+      type: 'booking',
+      isRead: false,
+      createdAt: DateTime.now(),
+    );
+  }
+
   // Reviews
   Future<List<ReviewModel>> getCarReviews(String carId) async {
     final snapshot = await _reviewsCollection

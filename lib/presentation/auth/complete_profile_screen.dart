@@ -234,7 +234,7 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
                       // Welcome Text
                       Center(
                         child: Text(
-                          'Phone Verified! 🎉',
+                          'Welcome to Drive Easy! 🎉',
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),

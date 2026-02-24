@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/datasources/booking_datasource.dart';
+import '../../data/datasources/notification_datasource.dart';
 import '../../data/models/booking_model.dart';
 import 'auth_provider.dart';
 
@@ -10,7 +11,7 @@ final bookingDatasourceProvider = Provider((ref) => BookingDatasource());
 final userBookingsProvider = StreamProvider<List<BookingModel>>((ref) {
   final user = ref.watch(currentUserProvider);
   final datasource = ref.watch(bookingDatasourceProvider);
-  
+
   return user.when(
     data: (user) {
       if (user == null) return Stream.value([]);
@@ -28,7 +29,10 @@ final allBookingsProvider = StreamProvider<List<BookingModel>>((ref) {
 });
 
 // Single booking provider
-final bookingByIdProvider = FutureProvider.family<BookingModel?, String>((ref, bookingId) async {
+final bookingByIdProvider = FutureProvider.family<BookingModel?, String>((
+  ref,
+  bookingId,
+) async {
   final datasource = ref.watch(bookingDatasourceProvider);
   return datasource.getBookingById(bookingId);
 });
@@ -99,8 +103,10 @@ class BookingState {
 // Booking notifier
 class BookingNotifier extends StateNotifier<BookingState> {
   final BookingDatasource _datasource;
+  final NotificationDatasource _notifDatasource;
 
-  BookingNotifier(this._datasource) : super(BookingState());
+  BookingNotifier(this._datasource, this._notifDatasource)
+    : super(BookingState());
 
   void setCar({
     required String carId,
@@ -116,14 +122,8 @@ class BookingNotifier extends StateNotifier<BookingState> {
     );
   }
 
-  void setDates({
-    required DateTime pickupDate,
-    required DateTime dropDate,
-  }) {
-    state = state.copyWith(
-      pickupDate: pickupDate,
-      dropDate: dropDate,
-    );
+  void setDates({required DateTime pickupDate, required DateTime dropDate}) {
+    state = state.copyWith(pickupDate: pickupDate, dropDate: dropDate);
   }
 
   void setPickupLocation(String location) {
@@ -155,8 +155,17 @@ class BookingNotifier extends StateNotifier<BookingState> {
       createdAt: DateTime.now(),
     );
 
+    final carName = state.carName!;
     final bookingId = await _datasource.createBooking(booking);
     reset();
+
+    // Fire booking confirmed notification (non-blocking)
+    _notifDatasource
+        .createNotification(
+          _notifDatasource.buildBookingNotification(userId, carName),
+        )
+        .catchError((_) {});
+
     return bookingId;
   }
 
@@ -173,9 +182,18 @@ class BookingNotifier extends StateNotifier<BookingState> {
   }
 }
 
-final bookingNotifierProvider = StateNotifierProvider<BookingNotifier, BookingState>((ref) {
-  return BookingNotifier(ref.watch(bookingDatasourceProvider));
-});
+final bookingNotifierProvider =
+    StateNotifierProvider<BookingNotifier, BookingState>((ref) {
+      return BookingNotifier(
+        ref.watch(bookingDatasourceProvider),
+        NotificationDatasource(),
+      );
+    });
 
 // Booking status list
-const List<String> bookingStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+const List<String> bookingStatuses = [
+  'pending',
+  'confirmed',
+  'cancelled',
+  'completed',
+];

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/app_dialog.dart';
 import '../../core/utils/helpers.dart';
 import '../../data/models/booking_model.dart';
 import '../providers/booking_provider.dart';
@@ -148,7 +149,7 @@ class _BookingCard extends ConsumerWidget {
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         Text(
-                          '\$${booking.totalPrice.toStringAsFixed(2)}',
+                          '₹${booking.totalPrice.toStringAsFixed(2)}',
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 color: AppColors.primary,
@@ -158,13 +159,16 @@ class _BookingCard extends ConsumerWidget {
                       ],
                     ),
                     if (booking.status == 'pending')
-                      TextButton(
-                        onPressed: () {
-                          _showCancelDialog(context, ref);
-                        },
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(color: AppColors.error),
+                      OutlinedButton.icon(
+                        onPressed: () => _cancelBooking(context, ref),
+                        icon: const Icon(Icons.cancel_outlined, size: 16),
+                        label: const Text('Cancel'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          side: const BorderSide(color: AppColors.error),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                   ],
@@ -192,34 +196,23 @@ class _BookingCard extends ConsumerWidget {
     );
   }
 
-  void _showCancelDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Booking'),
-        content: const Text('Are you sure you want to cancel this booking?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await ref
-                  .read(bookingNotifierProvider.notifier)
-                  .cancelBooking(booking.id);
-              if (context.mounted) {
-                Helpers.showSnackBar(context, 'Booking cancelled');
-              }
-            },
-            child: const Text(
-              'Yes, Cancel',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
+  Future<void> _cancelBooking(BuildContext context, WidgetRef ref) async {
+    final confirmed = await AppDialog.danger(
+      context,
+      title: 'Cancel Booking',
+      message:
+          'Are you sure you want to cancel your booking for ${booking.carName}? This cannot be undone.',
+      confirmText: 'Yes, Cancel',
+      cancelText: 'Keep Booking',
+      icon: Icons.cancel_outlined,
     );
+    if (confirmed && context.mounted) {
+      await ref
+          .read(bookingNotifierProvider.notifier)
+          .cancelBooking(booking.id);
+      if (context.mounted) {
+        Helpers.showSnackBar(context, 'Booking cancelled successfully');
+      }
+    }
   }
 }

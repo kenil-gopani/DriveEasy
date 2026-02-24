@@ -1,39 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/datasources/notification_datasource.dart';
 import '../../data/models/notification_model.dart';
-import 'auth_provider.dart';
+import 'user_provider.dart'; // re-exports notificationDatasourceProvider, userNotificationsProvider, unreadNotificationsCountProvider
 
-// Re-export notification datasource provider
-final notificationDatasourceProvider = Provider(
-  (ref) => NotificationDatasource(),
-);
-
-// User notifications stream provider
-final userNotificationsProvider = StreamProvider<List<NotificationModel>>((
-  ref,
-) {
-  final user = ref.watch(currentUserProvider);
-  final datasource = ref.watch(notificationDatasourceProvider);
-
-  return user.when(
-    data: (user) {
-      if (user == null) return Stream.value([]);
-      return datasource.userNotificationsStream(user.uid);
-    },
-    loading: () => Stream.value([]),
-    error: (_, __) => Stream.value([]),
-  );
-});
-
-// Unread notifications count
-final unreadNotificationsCountProvider = Provider<int>((ref) {
-  final notifications = ref.watch(userNotificationsProvider);
-  return notifications.when(
-    data: (list) => list.where((n) => !n.isRead).length,
-    loading: () => 0,
-    error: (_, __) => 0,
-  );
-});
+export 'user_provider.dart'
+    show
+        userNotificationsProvider,
+        unreadNotificationsCountProvider,
+        notificationDatasourceProvider;
 
 // Notification operations notifier
 class NotificationNotifier extends StateNotifier<AsyncValue<void>> {
@@ -44,17 +18,13 @@ class NotificationNotifier extends StateNotifier<AsyncValue<void>> {
   Future<void> markAsRead(String notificationId) async {
     try {
       await _datasource.markAsRead(notificationId);
-    } catch (e) {
-      // Silent fail for mark as read
-    }
+    } catch (_) {}
   }
 
   Future<void> markAllAsRead(String userId) async {
     try {
       await _datasource.markAllAsRead(userId);
-    } catch (e) {
-      // Silent fail
-    }
+    } catch (_) {}
   }
 
   Future<void> deleteNotification(String notificationId) async {
@@ -65,6 +35,42 @@ class NotificationNotifier extends StateNotifier<AsyncValue<void>> {
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
+  }
+
+  /// Creates a "Booking Confirmed" notification for the user.
+  Future<void> createBookingNotification(String userId, String carName) async {
+    try {
+      final notification = NotificationModel(
+        id: '',
+        userId: userId,
+        title: 'Booking Confirmed! 🎉',
+        message:
+            'Your booking for $carName has been confirmed. Have a great ride!',
+        type: 'booking',
+        isRead: false,
+        createdAt: DateTime.now(),
+      );
+      await _datasource.createNotification(notification);
+    } catch (_) {}
+  }
+
+  /// Creates a cancellation notification for the user.
+  Future<void> createCancellationNotification(
+    String userId,
+    String carName,
+  ) async {
+    try {
+      final notification = NotificationModel(
+        id: '',
+        userId: userId,
+        title: 'Booking Cancelled',
+        message: 'Your booking for $carName has been cancelled.',
+        type: 'cancelled',
+        isRead: false,
+        createdAt: DateTime.now(),
+      );
+      await _datasource.createNotification(notification);
+    } catch (_) {}
   }
 }
 

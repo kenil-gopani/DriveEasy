@@ -5,7 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/widgets/app_dialog.dart';
 
+import '../../data/seed_data.dart';
 import '../providers/auth_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -290,43 +292,75 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                           ]),
                         ],
+                        if (userData.role == 'owner') ...[
+                          const SizedBox(height: 24),
+                          _buildSectionHeader(context, 'Dev Tools'),
+                          const SizedBox(height: 12),
+                          _buildMenuCard(context, [
+                            _buildMenuItem(
+                              context,
+                              icon: Icons.cloud_upload_outlined,
+                              title: '🚗 Re-Seed 25 Luxury Cars',
+                              subtitle: 'Clears old cars & adds luxury fleet',
+                              iconColor: const Color(0xFF4CAF50),
+                              onTap: () async {
+                                final confirm = await AppDialog.confirm(
+                                  context,
+                                  title: 'Re-Seed Luxury Cars',
+                                  message:
+                                      'This will DELETE all existing cars and add 25 luxury cars (Lamborghini, Ferrari, Rolls-Royce, Bugatti…) with your account as owner. Continue?',
+                                  confirmText: 'Seed Now',
+                                  icon: Icons.cloud_upload_outlined,
+                                );
+                                if (confirm && context.mounted) {
+                                  try {
+                                    final result =
+                                        await SeedData.seedCarsForCurrentUser();
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(result),
+                                          backgroundColor: const Color(
+                                            0xFF4CAF50,
+                                          ),
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Error: $e'),
+                                          backgroundColor: AppColors.error,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                              showDivider: false,
+                            ),
+                          ]),
+                        ],
                         const SizedBox(height: 24),
                         // Logout Button
                         GestureDetector(
                           onTap: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                title: const Text('Logout'),
-                                content: const Text(
-                                  'Are you sure you want to logout?',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: Text(
-                                      'Cancel',
-                                      style: TextStyle(
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    child: const Text(
-                                      'Logout',
-                                      style: TextStyle(color: AppColors.error),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            final confirm = await AppDialog.danger(
+                              context,
+                              title: 'Sign Out',
+                              message:
+                                  'Are you sure you want to sign out of Drive Easy?',
+                              confirmText: 'Sign Out',
+                              cancelText: 'Stay',
+                              icon: Icons.logout_rounded,
                             );
-                            if (confirm == true) {
+                            if (confirm) {
                               await ref
                                   .read(authNotifierProvider.notifier)
                                   .signOut();
@@ -413,6 +447,7 @@ class ProfileScreen extends ConsumerWidget {
     BuildContext context, {
     required IconData icon,
     required String title,
+    String? subtitle,
     required VoidCallback onTap,
     Color? iconColor,
     bool showDivider = true,
@@ -440,6 +475,15 @@ class ProfileScreen extends ConsumerWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
+          subtitle: subtitle != null
+              ? Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                )
+              : null,
           trailing: Icon(
             Icons.chevron_right_rounded,
             color: AppColors.textLight,
