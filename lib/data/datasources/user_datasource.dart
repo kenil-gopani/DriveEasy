@@ -27,6 +27,13 @@ class UserDatasource {
     await _usersCollection.doc(user.uid).update(user.toMap());
   }
 
+  /// Creates or fully overwrites a user document (safe even if doc doesn't exist)
+  Future<void> setUser(UserModel user) async {
+    await _usersCollection
+        .doc(user.uid)
+        .set(user.toMap(), SetOptions(merge: true));
+  }
+
   Future<String> uploadProfilePhoto(String uid, File file) async {
     final ref = _storage.ref().child('users/$uid/profile.jpg');
     await ref.putFile(file);

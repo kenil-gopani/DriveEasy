@@ -14,15 +14,46 @@ final authStateProvider = StreamProvider<User?>((ref) {
   return authDatasource.authStateChanges;
 });
 
-// Current user provider
+// Current user provider — auto-creates missing Firestore doc from FirebaseAuth
 final currentUserProvider = StreamProvider<UserModel?>((ref) {
   final authState = ref.watch(authStateProvider);
   final userDatasource = ref.watch(userDatasourceProvider);
 
   return authState.when(
-    data: (user) {
-      if (user == null) return Stream.value(null);
-      return userDatasource.userStream(user.uid);
+    data: (firebaseUser) {
+      if (firebaseUser == null) return Stream.value(null);
+
+      // Stream the Firestore document; if it doesn't exist, create it on the fly
+      return userDatasource.userStream(firebaseUser.uid).asyncMap((
+        userData,
+      ) async {
+        if (userData != null) return userData;
+
+        // Firestore doc is missing — create a default one from FirebaseAuth data
+        final now = DateTime.now();
+        final fallback = UserModel(
+          uid: firebaseUser.uid,
+          name:
+              firebaseUser.displayName ??
+              firebaseUser.email?.split('@').first ??
+              'User',
+          email: firebaseUser.email ?? '',
+          phone: firebaseUser.phoneNumber ?? '',
+          photoUrl: firebaseUser.photoURL ?? '',
+          role: 'user',
+          profileComplete:
+              true, // treat as complete so they're not redirect-looped
+          createdAt: now,
+          updatedAt: now,
+        );
+
+        // Persist it to Firestore so next reads succeed
+        try {
+          await userDatasource.setUser(fallback);
+        } catch (_) {}
+
+        return fallback;
+      });
     },
     loading: () => Stream.value(null),
     error: (_, __) => Stream.value(null),

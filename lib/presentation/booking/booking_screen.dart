@@ -146,7 +146,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '\$${bookingState.pricePerDay?.toStringAsFixed(0) ?? '0'}/day',
+                          '₹${bookingState.pricePerDay?.toStringAsFixed(0) ?? '0'}/day',
                           style: TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.bold,
@@ -271,12 +271,12 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                   const Divider(height: 24),
                   _buildPriceRow(
                     'Price per day',
-                    '\$${bookingState.pricePerDay?.toStringAsFixed(0) ?? '0'}',
+                    '₹${bookingState.pricePerDay?.toStringAsFixed(0) ?? '0'}',
                   ),
                   const Divider(height: 24),
                   _buildPriceRow(
                     AppStrings.totalPrice,
-                    '\$${bookingState.totalPrice.toStringAsFixed(0)}',
+                    '₹${bookingState.totalPrice.toStringAsFixed(0)}',
                     isTotal: true,
                   ),
                 ],

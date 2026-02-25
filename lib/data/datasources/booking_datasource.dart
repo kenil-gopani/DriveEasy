@@ -17,24 +17,27 @@ class BookingDatasource {
   Future<List<BookingModel>> getUserBookings(String userId) async {
     final snapshot = await _bookingsCollection
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs
+    final bookings = snapshot.docs
         .map((doc) => BookingModel.fromMap(doc.data(), doc.id))
         .toList();
+    bookings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return bookings;
   }
 
   // Stream user bookings
   Stream<List<BookingModel>> userBookingsStream(String userId) {
     return _bookingsCollection
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
+        .map((snapshot) {
+          final bookings = snapshot.docs
               .map((doc) => BookingModel.fromMap(doc.data(), doc.id))
-              .toList(),
-        );
+              .toList();
+          // Sort in memory to avoid Firestore composite index requirement
+          bookings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return bookings;
+        });
   }
 
   // Get booking by ID
@@ -69,6 +72,25 @@ class BookingDatasource {
   // Update booking status
   Future<void> updateBookingStatus(String bookingId, String status) async {
     await _bookingsCollection.doc(bookingId).update({'status': status});
+  }
+
+  // Update booking dates / location
+  Future<void> updateBooking(
+    String bookingId, {
+    DateTime? pickupDate,
+    DateTime? dropDate,
+    String? pickupLocation,
+    int? totalDays,
+    double? totalPrice,
+  }) async {
+    final data = <String, dynamic>{};
+    if (pickupDate != null) data['pickupDate'] = Timestamp.fromDate(pickupDate);
+    if (dropDate != null) data['dropDate'] = Timestamp.fromDate(dropDate);
+    if (pickupLocation != null) data['pickupLocation'] = pickupLocation;
+    if (totalDays != null) data['totalDays'] = totalDays;
+    if (totalPrice != null) data['totalPrice'] = totalPrice;
+    if (data.isEmpty) return;
+    await _bookingsCollection.doc(bookingId).update(data);
   }
 
   // Cancel booking

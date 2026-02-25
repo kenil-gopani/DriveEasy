@@ -44,24 +44,42 @@ class CarModel {
   });
 
   factory CarModel.fromMap(Map<String, dynamic> map, String docId) {
+    // Safely parse mileage — could be stored as String ("10.5 km/l") or double (10.5)
+    String parseMileage(dynamic val) {
+      if (val == null) return '';
+      if (val is String) return val;
+      return '${val.toString()} km/l';
+    }
+
+    // Accept both 'pickupLocations' (List) and 'location' (String) from Firestore
+    List<String> parseLocations(Map<String, dynamic> m) {
+      if (m['pickupLocations'] != null) {
+        return List<String>.from(m['pickupLocations']);
+      }
+      if (m['location'] != null) {
+        return [m['location'].toString()];
+      }
+      return [];
+    }
+
     return CarModel(
       id: docId,
       name: map['name'] ?? '',
       brand: map['brand'] ?? '',
       category: map['category'] ?? '',
-      year: map['year'] ?? 2024,
+      year: (map['year'] ?? 2024) as int,
       pricePerDay: (map['pricePerDay'] ?? 0).toDouble(),
       images: List<String>.from(map['images'] ?? []),
-      seats: map['seats'] ?? 4,
+      seats: (map['seats'] ?? 4) as int,
       fuelType: map['fuelType'] ?? 'Petrol',
       transmission: map['transmission'] ?? 'Manual',
-      mileage: map['mileage'] ?? '',
+      mileage: parseMileage(map['mileage']),
       rating: (map['rating'] ?? 0).toDouble(),
-      reviewCount: map['reviewCount'] ?? 0,
+      reviewCount: (map['reviewCount'] ?? 0) as int,
       isAvailable: map['isAvailable'] ?? true,
       description: map['description'] ?? '',
       features: List<String>.from(map['features'] ?? []),
-      pickupLocations: List<String>.from(map['pickupLocations'] ?? []),
+      pickupLocations: parseLocations(map),
       ownerId: map['ownerId'] ?? '',
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );

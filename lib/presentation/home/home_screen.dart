@@ -7,11 +7,12 @@ import '../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../providers/car_provider.dart';
 import '../../data/models/car_model.dart';
-
+import '../../core/widgets/car_loading_widget.dart';
 import '../providers/favorites_provider.dart';
 import '../providers/notification_provider.dart';
 import '../providers/booking_provider.dart';
 import '../profile/profile_screen.dart';
+import '../booking/booking_history_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -907,167 +908,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   );
                 }
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: bookings.length,
                   itemBuilder: (context, index) {
-                    final booking = bookings[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.shadowLight,
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                booking.carName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(
-                                    booking.status,
-                                  ).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  booking.status.toUpperCase(),
-                                  style: TextStyle(
-                                    color: _getStatusColor(booking.status),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today,
-                                size: 16,
-                                color: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.color,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${_formatDate(booking.pickupDate)} - ${_formatDate(booking.dropDate)}',
-                                style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).textTheme.bodyMedium?.color,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on,
-                                    size: 16,
-                                    color: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium?.color,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    booking.pickupLocation,
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium?.color,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                '₹${booking.totalPrice.toStringAsFixed(0)}',
-                                style: TextStyle(
-                                  color: AppColors.accent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
+                    return BookingCard(booking: bookings[index]);
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => Center(
+              loading: () => const Center(child: CarLoadingWidget()),
+              error: (err, _) => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withOpacity(0.1),
+                        color: AppColors.error.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        Icons.calendar_today_rounded,
+                      child: const Icon(
+                        Icons.error_outline_rounded,
                         size: 48,
-                        color: Theme.of(context).primaryColor,
+                        color: AppColors.error,
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     const Text(
-                      'No bookings yet',
+                      'Could not load bookings',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Your booking history will appear here',
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        err.toString(),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => context.push(AppRoutes.home),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: () => ref.invalidate(userBookingsProvider),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 14,
+                          horizontal: 24,
+                          vertical: 12,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Find a Car'),
                     ),
                   ],
                 ),
@@ -1077,25 +979,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
     );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
-        return Colors.green;
-      case 'pending':
-        return Colors.orange;
-      case 'cancelled':
-        return AppColors.error;
-      case 'completed':
-        return Theme.of(context).primaryColor;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 
   Widget _buildFavoritesTab() {

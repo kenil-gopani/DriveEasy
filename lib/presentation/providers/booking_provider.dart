@@ -173,6 +173,25 @@ class BookingNotifier extends StateNotifier<BookingState> {
     await _datasource.cancelBooking(bookingId);
   }
 
+  Future<void> updateBooking(
+    String bookingId, {
+    required DateTime pickupDate,
+    required DateTime dropDate,
+    required String pickupLocation,
+    required double pricePerDay,
+  }) async {
+    final totalDays = dropDate.difference(pickupDate).inDays + 1;
+    final totalPrice = pricePerDay * totalDays;
+    await _datasource.updateBooking(
+      bookingId,
+      pickupDate: pickupDate,
+      dropDate: dropDate,
+      pickupLocation: pickupLocation,
+      totalDays: totalDays,
+      totalPrice: totalPrice,
+    );
+  }
+
   Future<void> updateBookingStatus(String bookingId, String status) async {
     await _datasource.updateBookingStatus(bookingId, status);
   }
