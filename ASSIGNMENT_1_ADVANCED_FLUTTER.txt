@@ -1,0 +1,586 @@
+================================================================================
+        ASSIGNMENT 1 – ADVANCED CONCEPTS & HARDWARE INTERACTION IN FLUTTER
+================================================================================
+Application Name : DriveEasy – Luxury Car Rental App
+Framework        : Flutter (Dart)
+Platform         : Android & iOS
+Date             : March 2026
+================================================================================
+
+
+────────────────────────────────────────────────────────────────────────────────
+OBJECTIVE
+────────────────────────────────────────────────────────────────────────────────
+The objective of this assignment is to implement various advanced features and
+hardware interaction capabilities in the DriveEasy Flutter mobile application
+to enhance functionality, interaction with device features, and real-world
+usability. All nine tasks have been successfully implemented and integrated into
+the existing car-rental application.
+
+
+================================================================================
+TASK 1 – MAIL AND SMS INTEGRATION
+================================================================================
+
+OVERVIEW:
+Users can send emails and SMS messages directly from within the app using the
+device's native mail and messaging applications via the url_launcher package.
+
+PACKAGE USED:
+  url_launcher: ^6.3.0
+
+IMPLEMENTATION:
+A dedicated utility class CommunicationService was created at:
+  lib/core/services/communication_service.dart
+
+The service provides three static methods:
+  • launchEmail()  – opens the native mail client with pre-filled To/Subject/Body
+  • launchSms()    – opens the native SMS app with a pre-filled message body
+  • launchCall()   – opens the phone dialer (covered in Task 2)
+
+EMAIL LAUNCH CODE:
+  static Future<void> launchEmail(
+    BuildContext context, {
+    required String to,
+    String subject = '',
+    String body = '',
+  }) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: to,
+      queryParameters: {'subject': subject, 'body': body},
+    );
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No email client found')),
+        );
+      }
+    }
+  }
+
+SMS LAUNCH CODE:
+  static Future<void> launchSms(
+    BuildContext context,
+    String phoneNumber, {
+    String body = '',
+  }) async {
+    final uri = Uri(scheme: 'sms', path: phoneNumber,
+                    queryParameters: {'body': body});
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+WHERE IT IS USED:
+  • lib/presentation/home/car_details_screen.dart  → "Chat" button sends SMS
+  • lib/presentation/support/help_support_screen.dart → "Email" and "Chat" buttons
+  • lib/core/widgets/speed_dial_fab.dart  → Email and SMS speed-dial actions
+
+PERMISSIONS ADDED:
+  Android (AndroidManifest.xml):
+    <queries>
+      <intent>
+        <action android:name="android.intent.action.SENDTO"/>
+        <data android:scheme="mailto"/>
+      </intent>
+      <intent>
+        <action android:name="android.intent.action.VIEW"/>
+        <data android:scheme="sms"/>
+      </intent>
+    </queries>
+
+  iOS (Info.plist):
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+      <string>mailto</string>
+      <string>sms</string>
+    </array>
+
+
+================================================================================
+TASK 2 – MAKING PHONE CALLS
+================================================================================
+
+OVERVIEW:
+A tap-to-call feature allows users to initiate phone calls directly from the
+Car Details screen and Help & Support screen. The permission to make calls is
+declared in the manifest and handled gracefully if unavailable.
+
+PACKAGE USED:
+  url_launcher: ^6.3.0  (same as Task 1)
+
+IMPLEMENTATION (inside CommunicationService):
+  static Future<void> launchCall(
+    BuildContext context,
+    String phoneNumber,
+  ) async {
+    final uri = Uri(scheme: 'tel', path: phoneNumber);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not launch phone dialer')),
+        );
+      }
+    }
+  }
+
+WHERE IT IS USED:
+  • Car Details screen  → "Call" button dials the car owner's number
+  • Help & Support screen → "Call" button dials the support hotline
+  • Speed Dial FAB → "Call" mini-button dials support
+
+PERMISSION ADDED:
+  Android (AndroidManifest.xml):
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <queries>
+      <intent>
+        <action android:name="android.intent.action.VIEW"/>
+        <data android:scheme="tel"/>
+      </intent>
+    </queries>
+
+  iOS (Info.plist):
+    <key>LSApplicationQueriesSchemes</key>
+    <array><string>tel</string></array>
+
+
+================================================================================
+TASK 3 – FAB SPEED DIAL WIDGET
+================================================================================
+
+OVERVIEW:
+An animated Floating Action Button (FAB) expands into three action buttons
+(Email, Call, SMS) using a staggered slide-up and fade-in animation. The main
+FAB icon changes between a contact icon (closed) and a close icon (open) using
+AnimatedSwitcher for clear visual feedback.
+
+FILE CREATED:
+  lib/core/widgets/speed_dial_fab.dart
+
+KEY IMPLEMENTATION DETAILS:
+  • AnimationController with 280 ms duration drives all animations
+  • RotationTransition on the main FAB (45° turn when open)
+  • AnimatedSwitcher swaps contact_support icon ↔ close icon
+  • Each mini-FAB uses staggered Interval curves for delayed appearance
+  • FadeTransition + SlideTransition (Offset y: 0.5 → 0.0) per action
+
+THREE SPEED DIAL ACTIONS:
+  ┌───────┬────────────────────┬─────────────────┐
+  │ Icon  │ Label              │ Action          │
+  ├───────┼────────────────────┼─────────────────┤
+  │ Email │ Email Support      │ launchEmail()   │
+  │ Call  │ Call Support       │ launchCall()    │
+  │ SMS   │ Send SMS           │ launchSms()     │
+  └───────┴────────────────────┴─────────────────┘
+
+INTEGRATION IN HOME SCREEN:
+  In lib/presentation/home/home_screen.dart the floatingActionButton is:
+    • Admin users on tab 0  → "Add Car" FAB (existing)
+    • All other users       → SpeedDialFab (new)
+
+CORE ANIMATION CODE SNIPPET:
+  _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 280),
+  );
+  _rotateAnim = Tween<double>(begin: 0, end: 0.375).animate(
+    CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+  );
+
+
+================================================================================
+TASK 4 – WAKE LOCK CONTROL
+================================================================================
+
+OVERVIEW:
+The screen is prevented from sleeping (dimming/locking) while the user is
+viewing the Car Details screen. This simulates a real use-case where the screen
+must stay on (e.g., showing a map or running a camera preview).
+
+PACKAGE USED:
+  wakelock_plus: ^1.2.10
+  (Note: The original 'wakelock' package is discontinued. wakelock_plus is the
+   official successor maintained by the Flutter community with the same API.)
+
+IMPLEMENTATION in lib/presentation/home/car_details_screen.dart:
+
+  import 'package:wakelock_plus/wakelock_plus.dart';
+
+  @override
+  void initState() {
+    super.initState();
+    // Keep screen awake while user is viewing car details
+    WakelockPlus.enable();
+  }
+
+  @override
+  void dispose() {
+    WakelockPlus.disable();   // release wake lock on exit
+    _pageController.dispose();
+    super.dispose();
+  }
+
+BEHAVIOUR:
+  • Screen stays on as soon as a car listing is opened
+  • Normal sleep behaviour resumes when the user navigates away
+  • Works on Android and iOS physical devices
+    (Wake lock is a no-op on Chrome/web – requires a physical device)
+
+
+================================================================================
+TASK 5 – HTTP GET & API HANDLING
+================================================================================
+
+OVERVIEW:
+The app fetches data from the public JSONPlaceholder REST API using HTTP GET
+and displays it in an animated ListView. All three UI states are handled:
+loading (shimmer skeleton), error (with retry button), and data.
+
+PACKAGE USED:
+  http: ^1.2.2
+
+FILES CREATED:
+  lib/data/models/post_model.dart          – data model
+  lib/core/services/api_service.dart       – HTTP service
+  lib/presentation/home/news_feed_screen.dart – UI screen
+
+API ENDPOINT:
+  GET https://jsonplaceholder.typicode.com/posts
+
+DATA MODEL (post_model.dart):
+  class PostModel {
+    final int id;
+    final int userId;
+    final String title;
+    final String body;
+
+    factory PostModel.fromJson(Map<String, dynamic> json) => PostModel(
+      id: json['id'] as int,
+      userId: json['userId'] as int,
+      title: json['title'] as String,
+      body: json['body'] as String,
+    );
+  }
+
+HTTP SERVICE (api_service.dart):
+  static Future<List<PostModel>> fetchPosts() async {
+    final response = await http
+        .get(Uri.parse('https://jsonplaceholder.typicode.com/posts'))
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode == 200) {
+      final List<dynamic> json = jsonDecode(response.body);
+      return json.map((e) => PostModel.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load posts (HTTP ${response.statusCode})');
+    }
+  }
+
+UI STATES IN news_feed_screen.dart:
+  1. LOADING  – Shimmer-style animated skeleton cards (TweenAnimationBuilder)
+  2. ERROR    – Wi-Fi off icon + error message + "Retry" ElevatedButton
+  3. DATA     – Staggered fade-in + slide-up ListView of post cards
+
+NAVIGATION:
+  Profile screen → Support section → "Car Tips & News" tile
+  Route: /news-feed
+
+
+================================================================================
+TASK 6 – GALLERY ACCESS
+================================================================================
+
+OVERVIEW:
+Users can pick multiple images from the device photo library. The selected
+images are displayed in an animated 2-column grid, with individual remove
+buttons per image and a running count label.
+
+PACKAGE USED:
+  image_picker: ^1.1.2  (already installed in the project)
+
+FILE CREATED:
+  lib/presentation/home/gallery_screen.dart
+
+CORE PICK LOGIC:
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImages() async {
+    final images = await _picker.pickMultiImage(imageQuality: 85);
+    if (images.isNotEmpty && mounted) {
+      setState(() => _selectedImages = images);
+    }
+  }
+
+GRID DISPLAY:
+  GridView.builder(
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 2,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1,
+    ),
+    itemBuilder: (context, index) => _buildImageTile(index),
+  )
+
+FEATURES:
+  • Multi-select from gallery in one picker session
+  • Animated scale + fade-in per tile (staggered by index)
+  • Numbered badge on each image
+  • Per-image remove button (✕)
+  • "Pick More Images" button to add more
+  • "Clear" button in AppBar to reset
+
+PERMISSIONS:
+  Android:
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+                     android:maxSdkVersion="32"/>
+  iOS (Info.plist):
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>DriveEasy accesses your photo library to let you pick images.</string>
+
+NAVIGATION:
+  Profile → Preferences → "Photo Gallery"
+  Route: /gallery
+
+
+================================================================================
+TASK 7 – CAMERA ACCESS
+================================================================================
+
+OVERVIEW:
+Users can take photos using the device's rear camera from within the app. After
+capture a full-screen preview is shown with two action buttons: Retake (re-opens
+camera) and Save (displays success SnackBar with the captured file name).
+
+PACKAGE USED:
+  image_picker: ^1.1.2  (already installed)
+
+FILE CREATED:
+  lib/presentation/home/camera_screen.dart
+
+CORE CAPTURE LOGIC:
+  Future<void> _takePhoto() async {
+    final photo = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 90,
+      preferredCameraDevice: CameraDevice.rear,
+    );
+    if (mounted) setState(() => _capturedImage = photo);
+  }
+
+UI FLOW:
+  1. Screen opens → camera launches automatically (addPostFrameCallback)
+  2. Photo taken → preview shown full-screen (Image.file)
+  3. "Retake"  → clears photo and re-opens camera
+  4. "Save"    → shows success overlay + SnackBar with file path
+                 (icon changes to ✓ and button is disabled on success)
+
+PERMISSIONS:
+  Android:
+    <uses-permission android:name="android.permission.CAMERA"/>
+  iOS (Info.plist):
+    <key>NSCameraUsageDescription</key>
+    <string>DriveEasy uses the camera to let you take photos.</string>
+
+NAVIGATION:
+  Profile → Preferences → "Camera"
+  Route: /camera
+
+
+================================================================================
+TASK 8 – BACKGROUND LOCAL NOTIFICATIONS
+================================================================================
+
+OVERVIEW:
+Local notifications are triggered from within the app and delivered even when
+the app is backgrounded. Two modes are demonstrated: immediate notification and
+a scheduled notification with a 5-second delay and a live countdown indicator.
+
+PACKAGES USED:
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0  (required for scheduled notifications)
+
+FILES CREATED:
+  lib/core/services/notification_service.dart
+  lib/presentation/notifications/notifications_demo_screen.dart
+
+INITIALIZATION (main.dart – called before runApp):
+  await NotificationService.initialize();
+
+  static Future<void> initialize() async {
+    tz_data.initializeTimeZones();        // set up timezone database
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosInit = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    await _plugin.initialize(
+      InitializationSettings(android: androidInit, iOS: iosInit),
+    );
+    // Request Android 13+ runtime permission
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  }
+
+IMMEDIATE NOTIFICATION:
+  await NotificationService.showImmediate(
+    title: '🚗 DriveEasy',
+    body: 'Your booking is confirmed! Enjoy your ride.',
+  );
+
+SCHEDULED NOTIFICATION (5 seconds):
+  await NotificationService.scheduleReminder(
+    title: '⏰ DriveEasy Reminder',
+    body: 'Check your tasks! Your rental starts soon.',
+    delaySeconds: 5,
+  );
+
+  // Uses TZDateTime for proper cross-platform scheduling:
+  final scheduledTime = tz.TZDateTime.now(tz.local)
+      .add(Duration(seconds: delaySeconds));
+  await _plugin.zonedSchedule(id, title, body, scheduledTime, _details,
+    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    uiLocalNotificationDateInterpretation:
+        UILocalNotificationDateInterpretation.absoluteTime,
+  );
+
+ANDROID CHANNEL CONFIGURATION:
+  AndroidNotificationDetails(
+    'driveasy_reminders',
+    'DriveEasy Reminders',
+    channelDescription: 'Booking and task reminders from DriveEasy',
+    importance: Importance.high,
+    priority: Priority.high,
+    playSound: true,
+    enableVibration: true,
+  )
+
+PERMISSIONS ADDED (AndroidManifest.xml):
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+
+BROADCAST RECEIVERS (AndroidManifest.xml):
+  <receiver android:name=
+    "com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"/>
+  <receiver android:name=
+    "com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+    <intent-filter>
+      <action android:name="android.intent.action.BOOT_COMPLETED"/>
+    </intent-filter>
+  </receiver>
+
+NAVIGATION:
+  Profile → Preferences → "Notification Demo"
+  Route: /notifications-demo
+
+
+================================================================================
+TASK 9 – DEVICE ORIENTATION RESTRICTION
+================================================================================
+
+OVERVIEW:
+The app is restricted to portrait orientation globally for all screens. This is
+enforced both programmatically (Flutter SystemChrome) and at the native platform
+level (iOS Info.plist) so the restriction applies from the very first frame.
+
+IMPLEMENTATION:
+  No extra package is required – Flutter's built-in services.dart is used.
+
+CODE IN main.dart (placed before runApp):
+  import 'package:flutter/services.dart';
+
+  // Lock to portrait orientation for entire app lifecycle
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+iOS NATIVE LOCK (Info.plist):
+  <!-- iPhone: portrait only -->
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+  </array>
+
+  <!-- iPad: portrait only -->
+  <key>UISupportedInterfaceOrientations~ipad</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationPortraitUpsideDown</string>
+  </array>
+
+  (UIInterfaceOrientationLandscapeLeft and LandscapeRight removed from both)
+
+EFFECT:
+  • All screens are portrait-only from app launch
+  • Rotating the device has no effect – layout stays in portrait
+  • Works on Android, iOS physical devices
+
+
+================================================================================
+SUMMARY TABLE – ALL FEATURES
+================================================================================
+
+ #  │ Feature                    │ Package(s) Used              │ Files Changed / Created
+────│────────────────────────────│──────────────────────────────│───────────────────────────────────────
+ 1  │ Mail & SMS Integration     │ url_launcher ^6.3.0          │ communication_service.dart
+    │                            │                              │ car_details_screen.dart
+    │                            │                              │ help_support_screen.dart
+────│────────────────────────────│──────────────────────────────│───────────────────────────────────────
+ 2  │ Phone Calls                │ url_launcher ^6.3.0          │ communication_service.dart (shared)
+    │                            │                              │ AndroidManifest.xml, Info.plist
+────│────────────────────────────│──────────────────────────────│───────────────────────────────────────
+ 3  │ FAB Speed Dial Widget      │ (Pure Flutter – no package)  │ speed_dial_fab.dart (NEW)
+    │                            │                              │ home_screen.dart
+────│────────────────────────────│──────────────────────────────│───────────────────────────────────────
+ 4  │ Wake Lock Control          │ wakelock_plus ^1.2.10        │ car_details_screen.dart
+    │                            │                              │ pubspec.yaml
+────│────────────────────────────│──────────────────────────────│───────────────────────────────────────
+ 5  │ HTTP GET & API Handling    │ http ^1.2.2                  │ api_service.dart (NEW)
+    │                            │                              │ post_model.dart (NEW)
+    │                            │                              │ news_feed_screen.dart (NEW)
+────│────────────────────────────│──────────────────────────────│───────────────────────────────────────
+ 6  │ Gallery Access             │ image_picker ^1.1.2          │ gallery_screen.dart (NEW)
+    │                            │ (already installed)          │ AndroidManifest.xml, Info.plist
+────│────────────────────────────│──────────────────────────────│───────────────────────────────────────
+ 7  │ Camera Access              │ image_picker ^1.1.2          │ camera_screen.dart (NEW)
+    │                            │ (already installed)          │ AndroidManifest.xml, Info.plist
+────│────────────────────────────│──────────────────────────────│───────────────────────────────────────
+ 8  │ Background Notifications   │ flutter_local_notifications  │ notification_service.dart (NEW)
+    │                            │ ^18.0.1 + timezone ^0.10.0  │ notifications_demo_screen.dart (NEW)
+    │                            │                              │ main.dart, AndroidManifest.xml
+────│────────────────────────────│──────────────────────────────│───────────────────────────────────────
+ 9  │ Orientation Restriction    │ (Built-in – services.dart)   │ main.dart
+    │                            │                              │ Info.plist (landscape removed)
+================================================================================
+
+
+================================================================================
+CONCLUSION
+================================================================================
+All 9 tasks from the assignment have been successfully implemented and integrated
+into the DriveEasy Flutter application without breaking any existing functionality.
+The app continues to use Firebase for authentication and data, Riverpod for state
+management, and go_router for navigation. All new features follow the established
+code style and are accessible from the Profile screen → Preferences and Support
+sections.
+
+Final packages added to pubspec.yaml:
+  • url_launcher: ^6.3.0
+  • wakelock_plus: ^1.2.10
+  • http: ^1.2.2
+  • flutter_local_notifications: ^18.0.1
+  • timezone: ^0.10.0
+
+Static analysis result: flutter analyze → No issues found on all new files.
+
+================================================================================

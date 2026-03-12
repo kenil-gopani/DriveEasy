@@ -15,7 +15,6 @@ import '../providers/auth_provider.dart';
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
-  // ─── Build a fallback UserModel from FirebaseAuth when Firestore is unavailable
   UserModel _fallbackUser() {
     final fb = FirebaseAuth.instance.currentUser;
     final now = DateTime.now();
@@ -38,11 +37,18 @@ class ProfileScreen extends ConsumerWidget {
     final isAdmin = ref.watch(isAdminProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Profile', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+      ),
       body: userAsync.when(
         loading: () => const CarLoadingWidget(message: 'Loading profile'),
-        error: (_, __) =>
-            _buildProfileBody(context, ref, _fallbackUser(), false),
+        error: (_, __) => _buildProfileBody(context, ref, _fallbackUser(), false),
         data: (userData) => _buildProfileBody(
           context,
           ref,
@@ -53,322 +59,318 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  //  Main profile body
-  // ─────────────────────────────────────────────────────────────
   Widget _buildProfileBody(
     BuildContext context,
     WidgetRef ref,
     UserModel userData,
     bool isAdmin,
   ) {
-    return CustomScrollView(
-      slivers: [
-        // ── Profile Header ────────────────────────────────────
-        SliverToBoxAdapter(
-          child: Container(
-            decoration: BoxDecoration(gradient: AppColors.heroGradient),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // ── Profile Info ────────────────────────────────────
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(top: 24, bottom: 24),
+            color: Colors.white,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Avatar
+                Stack(
+                  alignment: Alignment.bottomRight,
                   children: [
-                    // Top row: title + edit
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Profile',
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        GestureDetector(
-                          onTap: () => context.push(AppRoutes.editProfile),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.edit_outlined,
-                              color: Colors.white,
-                              size: 20,
-                            ),
+                    Container(
+                      width: 112,
+                      height: 112,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadowLight,
+                            blurRadius: 4,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    // Avatar
-                    Stack(
-                      alignment: Alignment.bottomRight,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 15,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: CircleAvatar(
-                            radius: 55,
-                            backgroundColor: AppColors.surface,
-                            backgroundImage: userData.photoUrl.isNotEmpty
-                                ? CachedNetworkImageProvider(userData.photoUrl)
-                                : null,
-                            child: userData.photoUrl.isEmpty
-                                ? Text(
-                                    userData.name.isNotEmpty
-                                        ? userData.name[0].toUpperCase()
-                                        : '?',
-                                    style: const TextStyle(
-                                      fontSize: 45,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                        ),
-                        if (isAdmin)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.accent.withOpacity(0.4),
-                                  blurRadius: 8,
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: userData.photoUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: userData.photoUrl,
+                                fit: BoxFit.cover,
+                              )
+                            : Center(
+                                child: Text(
+                                  userData.name.isNotEmpty ? userData.name[0].toUpperCase() : '?',
+                                  style: const TextStyle(
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
                                 ),
-                              ],
-                            ),
-                            child: const Text(
-                              'ADMIN',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      userData.name,
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      userData.email,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.8),
                       ),
                     ),
-                    if (userData.phone.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        userData.phone,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withOpacity(0.7),
-                        ),
+                    // Online Status Dot
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF22C55E), // Green 500
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
                       ),
-                    ],
-                    const SizedBox(height: 16),
+                    ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 16),
+                // Name & Info
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      userData.name,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    if (isAdmin) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                        ),
+                        child: const Text(
+                          'ADMIN',
+                          style: TextStyle(
+                            color: AppColors.error,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ]
+                  ],
+                ),
+                const SizedBox(height: 4),
+                if (userData.phone.isNotEmpty)
+                  Text(
+                    userData.phone,
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                  ),
+                if (userData.email.isNotEmpty)
+                  Text(
+                    userData.email,
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                  ),
+              ],
             ),
           ),
-        ),
 
-        // ── Menu Items ────────────────────────────────────────
-        SliverToBoxAdapter(
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.scaffoldBackground,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-            ),
-            transform: Matrix4.translationValues(0, -24, 0),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          // ── Menu Items ────────────────────────────────────────
+          Container(
+            color: AppColors.background,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+
+                // Account
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _buildSectionHeader(context, 'ACCOUNT'),
+                ),
+                const SizedBox(height: 8),
+                _buildMenuCard(context, [
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.person_outline_rounded,
+                    title: AppStrings.editProfile,
+                    onTap: () => context.push(AppRoutes.editProfile),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.lock_outline_rounded,
+                    title: AppStrings.changePassword,
+                    onTap: () => context.push(AppRoutes.changePassword),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.calendar_month_outlined,
+                    title: AppStrings.myBookings,
+                    onTap: () => context.push(AppRoutes.bookingHistory),
+                    showDivider: false,
+                  ),
+                ]),
+
+                const SizedBox(height: 24),
+
+                // Preferences
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _buildSectionHeader(context, 'PREFERENCES'),
+                ),
+                const SizedBox(height: 8),
+                _buildMenuCard(context, [
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.favorite_border_rounded,
+                    title: AppStrings.favorites,
+                    onTap: () => context.push(AppRoutes.favorites),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.photo_library_outlined,
+                    title: 'Photo Gallery',
+                    onTap: () => context.push(AppRoutes.gallery),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.camera_alt_outlined,
+                    title: 'Camera',
+                    onTap: () => context.push(AppRoutes.camera),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.notifications_none_rounded,
+                    title: AppStrings.notifications,
+                    onTap: () => context.push(AppRoutes.notifications),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.notifications_active_outlined,
+                    title: 'Notification Demo',
+                    onTap: () => context.push(AppRoutes.notificationsDemo),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.settings_outlined,
+                    title: AppStrings.settings,
+                    onTap: () => context.push(AppRoutes.settings),
+                    showDivider: false,
+                  ),
+                ]),
+
+                const SizedBox(height: 24),
+
+                // Support
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _buildSectionHeader(context, 'SUPPORT'),
+                ),
+                const SizedBox(height: 8),
+                _buildMenuCard(context, [
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.help_outline_rounded,
+                    title: AppStrings.helpSupport,
+                    onTap: () => context.push(AppRoutes.helpSupport),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.article_outlined,
+                    title: 'Car Tips & News',
+                    onTap: () => context.push(AppRoutes.newsFeed),
+                  ),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.description_outlined,
+                    title: AppStrings.termsPrivacy,
+                    onTap: () => context.push(AppRoutes.termsPrivacy),
+                    showDivider: false,
+                  ),
+                ]),
+
+                // Admin section
+                if (isAdmin) ...[
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: _buildSectionHeader(context, 'ADMIN'),
+                  ),
                   const SizedBox(height: 8),
-
-                  // Account
-                  _buildSectionHeader(context, 'Account'),
-                  const SizedBox(height: 12),
                   _buildMenuCard(context, [
                     _buildMenuItem(
                       context,
-                      icon: Icons.person_outline_rounded,
-                      title: AppStrings.editProfile,
-                      onTap: () => context.push(AppRoutes.editProfile),
-                    ),
-                    _buildMenuItem(
-                      context,
-                      icon: Icons.lock_outline_rounded,
-                      title: AppStrings.changePassword,
-                      onTap: () => context.push(AppRoutes.changePassword),
-                    ),
-                    _buildMenuItem(
-                      context,
-                      icon: Icons.calendar_month_outlined,
-                      title: AppStrings.myBookings,
-                      onTap: () => context.push(AppRoutes.bookingHistory),
+                      icon: Icons.admin_panel_settings_rounded,
+                      title: AppStrings.adminPanel,
+                      onTap: () => context.push(AppRoutes.adminDashboard),
+                      iconColor: AppColors.primary,
                       showDivider: false,
                     ),
                   ]),
+                ],
 
+                // Dev Tools (owner only)
+                if (userData.role == 'owner') ...[
                   const SizedBox(height: 24),
-
-                  // Preferences
-                  _buildSectionHeader(context, 'Preferences'),
-                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: _buildSectionHeader(context, 'DEV TOOLS'),
+                  ),
+                  const SizedBox(height: 8),
                   _buildMenuCard(context, [
                     _buildMenuItem(
                       context,
-                      icon: Icons.favorite_border_rounded,
-                      title: AppStrings.favorites,
-                      onTap: () => context.push(AppRoutes.favorites),
-                    ),
-                    _buildMenuItem(
-                      context,
-                      icon: Icons.notifications_outlined,
-                      title: AppStrings.notifications,
-                      onTap: () => context.push(AppRoutes.notifications),
-                    ),
-                    _buildMenuItem(
-                      context,
-                      icon: Icons.settings_outlined,
-                      title: AppStrings.settings,
-                      onTap: () => context.push(AppRoutes.settings),
-                      showDivider: false,
-                    ),
-                  ]),
-
-                  const SizedBox(height: 24),
-
-                  // Support
-                  _buildSectionHeader(context, 'Support'),
-                  const SizedBox(height: 12),
-                  _buildMenuCard(context, [
-                    _buildMenuItem(
-                      context,
-                      icon: Icons.help_outline_rounded,
-                      title: AppStrings.helpSupport,
-                      onTap: () => context.push(AppRoutes.helpSupport),
-                    ),
-                    _buildMenuItem(
-                      context,
-                      icon: Icons.description_outlined,
-                      title: AppStrings.termsPrivacy,
-                      onTap: () => context.push(AppRoutes.termsPrivacy),
-                      showDivider: false,
-                    ),
-                  ]),
-
-                  // Admin section
-                  if (isAdmin) ...[
-                    const SizedBox(height: 24),
-                    _buildSectionHeader(context, 'Admin'),
-                    const SizedBox(height: 12),
-                    _buildMenuCard(context, [
-                      _buildMenuItem(
-                        context,
-                        icon: Icons.admin_panel_settings_rounded,
-                        title: AppStrings.adminPanel,
-                        onTap: () => context.push(AppRoutes.adminDashboard),
-                        iconColor: AppColors.accent,
-                        showDivider: false,
-                      ),
-                    ]),
-                  ],
-
-                  // Dev Tools (owner only)
-                  if (userData.role == 'owner') ...[
-                    const SizedBox(height: 24),
-                    _buildSectionHeader(context, 'Dev Tools'),
-                    const SizedBox(height: 12),
-                    _buildMenuCard(context, [
-                      _buildMenuItem(
-                        context,
-                        icon: Icons.cloud_upload_outlined,
-                        title: '🚗 Re-Seed 25 Luxury Cars',
-                        subtitle: 'Clears old cars & adds luxury fleet',
-                        iconColor: const Color(0xFF4CAF50),
-                        onTap: () async {
-                          final confirm = await AppDialog.confirm(
-                            context,
-                            title: 'Re-Seed Luxury Cars',
-                            message:
-                                'This will DELETE all existing cars and add 25 luxury cars (Lamborghini, Ferrari, Rolls-Royce, Bugatti…). Continue?',
-                            confirmText: 'Seed Now',
-                            icon: Icons.cloud_upload_outlined,
-                          );
-                          if (confirm && context.mounted) {
-                            try {
-                              final result =
-                                  await SeedData.seedCarsForCurrentUser();
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(result),
-                                    backgroundColor: const Color(0xFF4CAF50),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error: $e'),
-                                    backgroundColor: AppColors.error,
-                                  ),
-                                );
-                              }
+                      icon: Icons.cloud_upload_outlined,
+                      title: 'Re-Seed 25 Luxury Cars',
+                      onTap: () async {
+                        final confirm = await AppDialog.confirm(
+                          context,
+                          title: 'Re-Seed Luxury Cars',
+                          message: 'This will DELETE all existing cars and add 25 luxury cars. Continue?',
+                          confirmText: 'Seed Now',
+                          icon: Icons.cloud_upload_outlined,
+                        );
+                        if (confirm && context.mounted) {
+                          try {
+                            final result = await SeedData.seedCarsForCurrentUser();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(result),
+                                  backgroundColor: const Color(0xFF4CAF50),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
                             }
                           }
-                        },
-                        showDivider: false,
-                      ),
-                    ]),
-                  ],
+                        }
+                      },
+                      iconColor: const Color(0xFF4CAF50),
+                      showDivider: false,
+                    ),
+                  ]),
+                ],
 
-                  const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
-                  // Logout button
-                  GestureDetector(
-                    onTap: () async {
+                // Logout button
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
                       final confirm = await AppDialog.danger(
                         context,
                         title: 'Sign Out',
-                        message:
-                            'Are you sure you want to sign out of Drive Easy?',
+                        message: 'Are you sure you want to sign out?',
                         confirmText: 'Sign Out',
                         cancelText: 'Stay',
                         icon: Icons.logout_rounded,
@@ -380,45 +382,32 @@ class ProfileScreen extends ConsumerWidget {
                         }
                       }
                     },
-                    child: Container(
-                      width: double.infinity,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: AppColors.error,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.error.withOpacity(0.3),
-                        ),
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.logout_rounded,
-                            color: AppColors.error,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            AppStrings.logout,
-                            style: TextStyle(
-                              color: AppColors.error,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ],
+                    ),
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 32),
-                ],
-              ),
+                ),
+                
+                const SizedBox(height: 48),
+              ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -428,10 +417,11 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+      style: const TextStyle(
         color: AppColors.textSecondary,
         fontWeight: FontWeight.w600,
-        letterSpacing: 0.5,
+        fontSize: 12,
+        letterSpacing: 1.2,
       ),
     );
   }
@@ -439,15 +429,11 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildMenuCard(BuildContext context, List<Widget> items) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowLight,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: Colors.white,
+        border: Border(
+           top: BorderSide(color: AppColors.border),
+           bottom: BorderSide(color: AppColors.border),
+        ),
       ),
       child: Column(children: items),
     );
@@ -457,52 +443,54 @@ class ProfileScreen extends ConsumerWidget {
     BuildContext context, {
     required IconData icon,
     required String title,
-    String? subtitle,
     required VoidCallback onTap,
     Color? iconColor,
     bool showDivider = true,
   }) {
+    final c = iconColor ?? AppColors.textSecondary;
     return Column(
       children: [
-        ListTile(
+        InkWell(
           onTap: onTap,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 4,
-          ),
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: (iconColor ?? AppColors.primary).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: iconColor ?? AppColors.primary, size: 22),
-          ),
-          title: Text(
-            title,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          subtitle: subtitle != null
-              ? Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                )
-              : null,
-          trailing: Icon(
-            Icons.chevron_right_rounded,
-            color: AppColors.textLight,
+                  child: Icon(icon, color: c, size: 20),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textLight,
+                  size: 20,
+                ),
+              ],
+            ),
           ),
         ),
         if (showDivider)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Divider(height: 1, color: AppColors.border.withOpacity(0.5)),
+            padding: const EdgeInsets.only(left: 68),
+            child: Divider(
+              height: 1, 
+              color: AppColors.border,
+            ),
           ),
       ],
     );

@@ -116,6 +116,8 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
     required String value,
   }) {
     final isSelected = _selectedRole == value;
+    final accentColor = isSelected ? AppColors.teal : AppColors.textLight;
+
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = value),
       child: AnimatedContainer(
@@ -123,60 +125,70 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.1)
-              : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+              ? AppColors.teal.withOpacity(0.1)
+              : AppColors.darkSurface,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? AppColors.teal.withOpacity(0.5) : AppColors.darkBorder,
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.2),
-                    blurRadius: 8,
+                    color: AppColors.teal.withOpacity(0.2),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ]
-              : null,
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+              ],
         ),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.primary.withOpacity(0.2)
-                    : AppColors.background,
+                    ? AppColors.teal.withOpacity(0.2)
+                    : AppColors.scaffoldBackground,
                 shape: BoxShape.circle,
+                border: Border.all(
+                   color: isSelected ? AppColors.teal.withOpacity(0.5) : AppColors.darkBorder,
+                ),
               ),
               child: Icon(
                 icon,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: accentColor,
                 size: 28,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
               title,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                color: isSelected ? AppColors.teal : Colors.white,
+                letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               subtitle,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textLight),
               textAlign: TextAlign.center,
             ),
             if (isSelected) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               const Icon(
-                Icons.check_circle,
-                color: AppColors.primary,
+                Icons.check_circle_rounded,
+                color: AppColors.teal,
                 size: 20,
               ),
             ],
@@ -213,20 +225,21 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
                           width: 100,
                           height: 100,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                AppColors.success.withOpacity(0.2),
-                                AppColors.success.withOpacity(0.1),
-                              ],
-                            ),
+                            color: AppColors.teal.withOpacity(0.1),
                             shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.teal.withOpacity(0.3)),
+                            boxShadow: [
+                               BoxShadow(
+                                 color: AppColors.teal.withOpacity(0.15),
+                                 blurRadius: 20,
+                                 offset: const Offset(0, 8),
+                               )
+                            ]
                           ),
                           child: const Icon(
-                            Icons.check_circle_outline,
-                            size: 60,
-                            color: AppColors.success,
+                            Icons.check_circle_outline_rounded,
+                            size: 50,
+                            color: AppColors.teal,
                           ),
                         ),
                       ),
@@ -236,7 +249,11 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
                         child: Text(
                           'Welcome to Drive Easy! 🎉',
                           style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
+                              ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -244,36 +261,44 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
                         child: Text(
                           'Complete your profile to get started',
                           style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: AppColors.textSecondary),
+                              ?.copyWith(color: AppColors.textLight),
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 48),
                       // Phone Display (Read-only)
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.darkSurface,
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: AppColors.primary.withOpacity(0.2),
+                            color: AppColors.darkBorder,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.shadowMedium,
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            )
+                          ]
                         ),
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
+                                color: AppColors.scaffoldBackground,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.darkBorder),
                               ),
                               child: const Icon(
-                                Icons.phone_android,
-                                color: AppColors.primary,
-                                size: 20,
+                                Icons.phone_android_rounded,
+                                color: AppColors.teal,
+                                size: 24,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,27 +307,33 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
                                     'Phone Number',
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          color: AppColors.textSecondary,
+                                          color: AppColors.textLight,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Text(
                                     user?.phone ?? 'Not available',
                                     style: Theme.of(context).textTheme.bodyLarge
-                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          letterSpacing: 0.5,
+                                        ),
                                   ),
                                 ],
                               ),
                             ),
                             const Icon(
-                              Icons.verified,
-                              color: AppColors.success,
-                              size: 20,
+                              Icons.verified_rounded,
+                              color: AppColors.teal,
+                              size: 24,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                       // Name Field
                       CustomTextField(
                         label: 'Full Name',
@@ -377,30 +408,40 @@ class _CompleteProfileScreenState extends ConsumerState<CompleteProfileScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 40),
                       // Info Box
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.info.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.darkSurface,
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: AppColors.info.withOpacity(0.2),
+                            color: AppColors.darkBorder,
                           ),
                         ),
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: AppColors.info,
-                              size: 20,
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.blueAccent.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.info_outline_rounded,
+                                color: Colors.blueAccent.shade100,
+                                size: 20,
+                              ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: Text(
                                 'You can complete your profile later from settings.',
                                 style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: AppColors.info),
+                                    ?.copyWith(
+                                      color: Colors.blueAccent.shade100,
+                                      height: 1.5,
+                                    ),
                               ),
                             ),
                           ],

@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'app/app.dart';
 import 'core/constants/app_colors.dart';
+import 'core/services/notification_service.dart';
 import 'presentation/providers/theme_provider.dart';
 
 void main() async {
@@ -14,6 +16,15 @@ void main() async {
   runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+
+      // ── Feature 9: Lock to portrait orientation ──────────────
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+
+      // ── Feature 8: Initialize local notifications ────────────
+      await NotificationService.initialize();
 
       // Set up Flutter error handling
       FlutterError.onError = (FlutterErrorDetails details) {

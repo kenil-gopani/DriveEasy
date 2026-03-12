@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "driveasy (Chrome - Bypass CORS)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--web-port=5000",
+                "--web-browser-flag=\"--disable-web-security\""
+            ]
+        }
+    ]
+}

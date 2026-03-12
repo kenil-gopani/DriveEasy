@@ -32,6 +32,10 @@ import '../presentation/admin/admin_dashboard_screen.dart';
 import '../presentation/admin/add_edit_car_screen.dart';
 import '../presentation/admin/manage_bookings_screen.dart';
 import '../presentation/admin/admin_car_list_screen.dart';
+import '../presentation/home/news_feed_screen.dart';
+import '../presentation/home/gallery_screen.dart';
+import '../presentation/home/camera_screen.dart';
+import '../presentation/notifications/notifications_demo_screen.dart';
 
 // Route paths
 class AppRoutes {
@@ -64,6 +68,10 @@ class AppRoutes {
   static const String adminEditCar = '/admin/edit-car/:id';
   static const String adminManageBookings = '/admin/bookings';
   static const String adminCarList = '/admin/cars';
+  static const String newsFeed = '/news-feed';
+  static const String gallery = '/gallery';
+  static const String camera = '/camera';
+  static const String notificationsDemo = '/notifications-demo';
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -247,6 +255,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.adminCarList,
         builder: (context, state) => const AdminCarListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.newsFeed,
+        builder: (context, state) => const NewsFeedScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.gallery,
+        builder: (context, state) => const GalleryScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.camera,
+        builder: (context, state) => const CameraScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.notificationsDemo,
+        builder: (context, state) => const NotificationsDemoScreen(),
       ),
     ],
     errorBuilder: (context, state) =>

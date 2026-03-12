@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
+import '../../core/services/communication_service.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -48,11 +49,38 @@ class HelpSupportScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildContactButton(Icons.email, 'Email'),
+                      _buildContactButton(
+                        context,
+                        Icons.email,
+                        'Email',
+                        onTap: () => CommunicationService.launchEmail(
+                          context,
+                          to: CommunicationService.supportEmail,
+                          subject: 'DriveEasy Support Request',
+                          body: 'Hi DriveEasy team, I need help with...',
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      _buildContactButton(Icons.phone, 'Call'),
+                      _buildContactButton(
+                        context,
+                        Icons.phone,
+                        'Call',
+                        onTap: () => CommunicationService.launchCall(
+                          context,
+                          CommunicationService.supportPhone,
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      _buildContactButton(Icons.chat, 'Chat'),
+                      _buildContactButton(
+                        context,
+                        Icons.chat,
+                        'Chat',
+                        onTap: () => CommunicationService.launchSms(
+                          context,
+                          CommunicationService.supportPhone,
+                          body: 'Hi DriveEasy, I need assistance with...',
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -101,20 +129,31 @@ class HelpSupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContactButton(IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            shape: BoxShape.circle,
+  Widget _buildContactButton(
+    BuildContext context,
+    IconData icon,
+    String label, {
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white),
           ),
-          child: Icon(icon, color: Colors.white),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 

@@ -25,7 +25,7 @@ android {
 
     defaultConfig {
         applicationId = "com.driveeasy.app"
-        // Minimum SDK 21 = Android 5.0 (Lollipop) - supports 99% of devices
+        // Minimum SDK 23 = Android 6.0 - required by Firebase BoM 32+
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
 import '../../core/utils/validators.dart';
 import '../../core/utils/helpers.dart';
 import '../../core/widgets/custom_text_field.dart';
@@ -18,15 +17,37 @@ class SignupScreen extends ConsumerStatefulWidget {
   ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends ConsumerState<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> 
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  
   bool _isLoading = false;
   String _selectedRole = 'user'; // Default role
+
+  late AnimationController _animController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeIn),
+    );
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+    );
+    _animController.forward();
+  }
 
   @override
   void dispose() {
@@ -35,18 +56,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
   Future<void> _signup() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
     try {
-      await ref
-          .read(authNotifierProvider.notifier)
-          .signUp(
+      await ref.read(authNotifierProvider.notifier).signUp(
             email: _emailController.text.trim(),
             password: _passwordController.text,
             name: _nameController.text.trim(),
@@ -55,7 +74,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           );
       if (mounted) {
         Helpers.showSnackBar(context, 'Account created successfully!');
-        // Router will automatically redirect based on profileComplete flag
         context.go(AppRoutes.completeProfile);
       }
     } catch (e) {
@@ -63,21 +81,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         Helpers.showSnackBar(context, e.toString(), isError: true);
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
         ),
       ),
@@ -85,143 +101,159 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         isLoading: _isLoading,
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppStrings.createAccount,
-                    style: Theme.of(context).textTheme.displaySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppStrings.signupSubtitle,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Role Selection
-                  Text(
-                    'I want to:',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: _RoleCard(
-                          icon: Icons.car_rental,
-                          title: 'Rent Cars',
-                          subtitle: 'Book cars for trips',
-                          isSelected: _selectedRole == 'user',
-                          onTap: () => setState(() => _selectedRole = 'user'),
+                      const Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          letterSpacing: -1,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _RoleCard(
-                          icon: Icons.directions_car,
-                          title: 'List Cars',
-                          subtitle: 'Rent out my cars',
-                          isSelected: _selectedRole == 'owner',
-                          onTap: () => setState(() => _selectedRole = 'owner'),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Join DriveEasy to start your journey today.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
+                      const SizedBox(height: 32),
 
-                  // Name field
-                  CustomTextField(
-                    label: AppStrings.fullName,
-                    hint: 'Enter your full name',
-                    controller: _nameController,
-                    prefixIcon: Icons.person_outline,
-                    validator: Validators.name,
-                  ),
-                  const SizedBox(height: 16),
-                  // Email field
-                  CustomTextField(
-                    label: AppStrings.email,
-                    hint: 'Enter your email',
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    prefixIcon: Icons.email_outlined,
-                    validator: Validators.email,
-                  ),
-                  const SizedBox(height: 16),
-                  // Phone field
-                  CustomTextField(
-                    label: AppStrings.phone,
-                    hint: 'Enter your phone number',
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    prefixIcon: Icons.phone_outlined,
-                    validator: Validators.phone,
-                  ),
-                  const SizedBox(height: 16),
-                  // Password field
-                  CustomTextField(
-                    label: AppStrings.password,
-                    hint: 'Create a password',
-                    controller: _passwordController,
-                    obscureText: true,
-                    prefixIcon: Icons.lock_outline,
-                    validator: Validators.password,
-                  ),
-                  const SizedBox(height: 16),
-                  // Confirm password field
-                  CustomTextField(
-                    label: AppStrings.confirmPassword,
-                    hint: 'Confirm your password',
-                    controller: _confirmPasswordController,
-                    obscureText: true,
-                    prefixIcon: Icons.lock_outline,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  // Signup button
-                  PrimaryButton(
-                    text: AppStrings.signup,
-                    onPressed: _signup,
-                    isLoading: _isLoading,
-                  ),
-                  const SizedBox(height: 24),
-                  // Login link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        AppStrings.alreadyHaveAccount,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      // Role Selection
+                      const Text(
+                        'What are you looking for?',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                      TextButton(
-                        onPressed: () => context.pop(),
-                        child: Text(
-                          AppStrings.login,
-                          style: TextStyle(
-                            color: AppColors.accent,
-                            fontWeight: FontWeight.bold,
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _RoleCard(
+                              icon: Icons.car_rental_rounded,
+                              title: 'Rent Cars',
+                              subtitle: 'Book cars for your trips',
+                              isSelected: _selectedRole == 'user',
+                              onTap: () => setState(() => _selectedRole = 'user'),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _RoleCard(
+                              icon: Icons.directions_car_rounded,
+                              title: 'List Cars',
+                              subtitle: 'Rent out your vehicles',
+                              isSelected: _selectedRole == 'owner',
+                              onTap: () => setState(() => _selectedRole = 'owner'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+
+                      // Input Fields
+                      CustomTextField(
+                        label: 'Full Name',
+                        hint: 'John Doe',
+                        controller: _nameController,
+                        prefixIcon: Icons.person_rounded,
+                        validator: Validators.name,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextField(
+                        label: 'Email Address',
+                        hint: 'name@example.com',
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        prefixIcon: Icons.email_rounded,
+                        validator: Validators.email,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextField(
+                        label: 'Phone Number',
+                        hint: '00000 00000',
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        prefixIcon: Icons.phone_rounded,
+                        validator: Validators.phone,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextField(
+                        label: 'Password',
+                        hint: 'Create a password',
+                        controller: _passwordController,
+                        obscureText: true,
+                        prefixIcon: Icons.lock_outline_rounded,
+                        validator: Validators.password,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextField(
+                        label: 'Confirm Password',
+                        hint: 'Retype your password',
+                        controller: _confirmPasswordController,
+                        obscureText: true,
+                        prefixIcon: Icons.lock_rounded,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please confirm your password';
+                          }
+                          if (value != _passwordController.text) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
+                      ),
+                      
+                      const SizedBox(height: 32),
+                      
+                      PrimaryButton(
+                        text: 'Create Account',
+                        onPressed: _signup,
+                        isLoading: _isLoading,
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Login link
+                      Center(
+                        child: GestureDetector(
+                          onTap: () => context.pop(),
+                          child: RichText(
+                            text: const TextSpan(
+                              style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
+                              children: [
+                                TextSpan(text: "Already have an account? "),
+                                TextSpan(
+                                  text: "Sign In",
+                                  style: TextStyle(
+                                    color: Color(0xFF0D7FF2),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 32),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -252,36 +284,45 @@ class _RoleCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
-              : AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? const Color(0xFF0D7FF2).withOpacity(0.08) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
+            color: isSelected ? const Color(0xFF0D7FF2) : AppColors.border,
             width: isSelected ? 2 : 1,
           ),
+          boxShadow: isSelected ? [] : [
+            BoxShadow(
+              color: AppColors.shadowLight,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
             Icon(
               icon,
-              size: 32,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              size: 36,
+              color: isSelected ? const Color(0xFF0D7FF2) : AppColors.textSecondary,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               title,
               style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isSelected ? const Color(0xFF0D7FF2) : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: 12, 
+                color: isSelected ? const Color(0xFF0D7FF2).withOpacity(0.8) : AppColors.textSecondary,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_strings.dart';
 import '../../core/widgets/car_card.dart';
-import '../../core/widgets/empty_state.dart';
 import '../providers/auth_provider.dart';
 import '../providers/car_provider.dart';
 import '../providers/favorites_provider.dart';
@@ -36,130 +34,126 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final searchResults = ref.watch(searchResultsProvider);
+    final allCars = ref.watch(carsStreamProvider);
     final query = ref.watch(searchQueryProvider);
     final favoriteIds = ref.watch(favoriteCarIdsProvider);
 
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
-      appBar: AppBar(
-        title: TextField(
-          controller: _searchController,
-          focusNode: _focusNode,
-          decoration: InputDecoration(
-            hintText: AppStrings.searchCars,
-            border: InputBorder.none,
-            hintStyle: TextStyle(color: AppColors.textLight),
-          ),
-          onChanged: (value) {
-            ref.read(searchQueryProvider.notifier).state = value;
-          },
-        ),
-        actions: [
-          if (query.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: () {
-                _searchController.clear();
-                ref.read(searchQueryProvider.notifier).state = '';
-              },
-            ),
-        ],
-      ),
-      body: query.isEmpty
-          ? _buildInitialState()
-          : searchResults.when(
-              data: (cars) {
-                if (cars.isEmpty) {
-                  return EmptyState(
-                    icon: Icons.search_off,
-                    title: AppStrings.noCarsFound,
-                    subtitle: 'Try searching with different keywords',
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: cars.length,
-                  itemBuilder: (context, index) {
-                    final car = cars[index];
-                    return CarCard(
-                      id: car.id,
-                      name: car.name,
-                      brand: car.brand,
-                      imageUrl: car.firstImage,
-                      pricePerDay: car.pricePerDay,
-                      rating: car.rating,
-                      transmission: car.transmission,
-                      fuelType: car.fuelType,
-                      seats: car.seats,
-                      isFavorite: favoriteIds.contains(car.id),
-                      onTap: () => context.push('/car/${car.id}'),
-                      onFavoriteToggle: () {
-                        final userId = ref
-                            .read(currentUserProvider)
-                            .valueOrNull
-                            ?.uid;
-                        if (userId != null) {
-                          ref
-                              .read(favoritesNotifierProvider.notifier)
-                              .toggleFavorite(userId, car.id);
-                        }
-                      },
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(child: Text('Error searching')),
-            ),
-    );
-  }
+    final displayAsync = query.isEmpty ? allCars : searchResults;
 
-  Widget _buildInitialState() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Popular Categories',
-            style: Theme.of(context).textTheme.titleLarge,
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: AppColors.shadowLight,
+        title: Container(
+          height: 44,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.border),
           ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: carCategories.map((category) {
-              return ActionChip(
-                label: Text(category),
-                onPressed: () {
-                  _searchController.text = category;
-                  ref.read(searchQueryProvider.notifier).state = category;
+          child: TextField(
+            controller: _searchController,
+            focusNode: _focusNode,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Search cars, brands...',
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              hintStyle: const TextStyle(color: AppColors.textSecondary),
+              suffixIcon: query.isNotEmpty 
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded, color: AppColors.textSecondary),
+                      onPressed: () {
+                        _searchController.clear();
+                        ref.read(searchQueryProvider.notifier).state = '';
+                      },
+                    )
+                  : const Icon(Icons.search_rounded, color: AppColors.textSecondary),
+            ),
+            onChanged: (value) {
+              ref.read(searchQueryProvider.notifier).state = value;
+            },
+          ),
+        ),
+        automaticallyImplyLeading: false, // Don't show back arrow if it's a root tab.
+      ),
+      body: displayAsync.when(
+        data: (cars) {
+          if (cars.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.search_off_rounded,
+                      size: 48,
+                      color: AppColors.textLight,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'No Cars Found',
+                    style: TextStyle(
+                      fontSize: 20, 
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Try searching with different keywords',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+            itemCount: cars.length,
+            itemBuilder: (context, index) {
+              final car = cars[index];
+              return CarCard(
+                id: car.id,
+                name: car.name,
+                brand: car.brand,
+                imageUrl: car.firstImage,
+                pricePerDay: car.pricePerDay,
+                rating: car.rating,
+                transmission: car.transmission,
+                fuelType: car.fuelType,
+                seats: car.seats,
+                isFavorite: favoriteIds.contains(car.id),
+                onTap: () => context.push('/car/${car.id}'),
+                onFavoriteToggle: () {
+                  final userId = ref.read(currentUserProvider).valueOrNull?.uid;
+                  if (userId != null) {
+                    ref
+                        .read(favoritesNotifierProvider.notifier)
+                        .toggleFavorite(userId, car.id);
+                  }
                 },
               );
-            }).toList(),
-          ),
-          const SizedBox(height: 32),
-          Text('Search Tips', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 16),
-          _buildTip('Search by car name, brand, or category'),
-          _buildTip('Try "SUV" for family trips'),
-          _buildTip('Try "Luxury" for premium cars'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTip(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Icon(Icons.lightbulb_outline, color: AppColors.accent, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-        ],
+            },
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, __) => const Center(child: Text('Error loading cars')),
       ),
     );
   }

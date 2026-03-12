@@ -28,7 +28,6 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen>
   bool _codeSent = false;
   String? _verificationId;
 
-  // Country code settings
   String _selectedCountryCode = '+91';
   final List<Map<String, String>> _countryCodes = [
     {'code': '+91', 'name': 'India', 'flag': '🇮🇳'},
@@ -37,53 +36,37 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen>
     {'code': '+61', 'name': 'Australia', 'flag': '🇦🇺'},
     {'code': '+971', 'name': 'UAE', 'flag': '🇦🇪'},
     {'code': '+65', 'name': 'Singapore', 'flag': '🇸🇬'},
-    {'code': '+81', 'name': 'Japan', 'flag': '🇯🇵'},
-    {'code': '+49', 'name': 'Germany', 'flag': '🇩🇪'},
   ];
 
-  // Resend OTP timer
   Timer? _resendTimer;
   int _resendSeconds = 60;
   bool _canResend = false;
 
-  // Animation controllers
-  late AnimationController _slideController;
-  late AnimationController _fadeController;
-  late Animation<Offset> _slideAnimation;
+  late AnimationController _contentController;
   late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+    _contentController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeIn),
     );
-
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
-        );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeIn));
-
-    _slideController.forward();
-    _fadeController.forward();
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+      CurvedAnimation(parent: _contentController, curve: Curves.easeOutCubic),
+    );
+    _contentController.forward();
   }
 
   @override
   void dispose() {
     _phoneController.dispose();
     _resendTimer?.cancel();
-    _slideController.dispose();
-    _fadeController.dispose();
+    _contentController.dispose();
     super.dispose();
   }
 
@@ -92,54 +75,45 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen>
     _canResend = false;
     _resendTimer?.cancel();
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        if (_resendSeconds > 0) {
-          _resendSeconds--;
-        } else {
-          _canResend = true;
-          timer.cancel();
-        }
-      });
+      if (mounted) {
+        setState(() {
+          if (_resendSeconds > 0) {
+            _resendSeconds--;
+          } else {
+            _canResend = true;
+            timer.cancel();
+          }
+        });
+      }
     });
   }
 
-  String get _formattedPhone =>
-      '$_selectedCountryCode${_phoneController.text.trim()}';
+  String get _formattedPhone => '$_selectedCountryCode${_phoneController.text.trim()}';
 
   Future<void> _sendOTP() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
     try {
-      await ref
-          .read(authNotifierProvider.notifier)
-          .sendPhoneOTP(
+      await ref.read(authNotifierProvider.notifier).sendPhoneOTP(
             phoneNumber: _formattedPhone,
             onCodeSent: (verificationId) {
-              setState(() {
-                _verificationId = verificationId;
-                _codeSent = true;
-                _isLoading = false;
-              });
-              _startResendTimer();
-              // Animate transition to OTP screen
-              _slideController.reset();
-              _fadeController.reset();
-              _slideController.forward();
-              _fadeController.forward();
-              Helpers.showSnackBar(context, 'OTP sent to $_formattedPhone');
+              if (mounted) {
+                setState(() {
+                  _verificationId = verificationId;
+                  _codeSent = true;
+                  _isLoading = false;
+                });
+                _startResendTimer();
+                _contentController.reset();
+                _contentController.forward();
+                Helpers.showSnackBar(context, 'OTP sent to $_formattedPhone');
+              }
             },
             onVerificationCompleted: (credential) async {
-              // Auto-verification on some Android devices
               setState(() => _isLoading = true);
               try {
-                await ref
-                    .read(authNotifierProvider.notifier)
-                    .signInWithPhoneCredential(credential);
+                await ref.read(authNotifierProvider.notifier).signInWithPhoneCredential(credential);
                 if (mounted) {
-                  Helpers.showSnackBar(context, 'Phone verified successfully!');
-                  // Check if profile is complete
                   final user = ref.read(currentUserProvider).valueOrNull;
                   if (user != null && !user.profileComplete) {
                     context.go(AppRoutes.completeProfile);
@@ -148,23 +122,23 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen>
                   }
                 }
               } catch (e) {
-                if (mounted) {
-                  Helpers.showSnackBar(context, e.toString(), isError: true);
-                }
+                if (mounted) Helpers.showSnackBar(context, e.toString(), isError: true);
               } finally {
-                if (mounted) {
-                  setState(() => _isLoading = false);
-                }
+                if (mounted) setState(() => _isLoading = false);
               }
             },
             onVerificationFailed: (error) {
-              setState(() => _isLoading = false);
-              Helpers.showSnackBar(context, error, isError: true);
+              if (mounted) {
+                setState(() => _isLoading = false);
+                Helpers.showSnackBar(context, error, isError: true);
+              }
             },
           );
     } catch (e) {
-      setState(() => _isLoading = false);
-      Helpers.showSnackBar(context, e.toString(), isError: true);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Helpers.showSnackBar(context, e.toString(), isError: true);
+      }
     }
   }
 
@@ -173,17 +147,13 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen>
       Helpers.showSnackBar(context, 'Please enter 6-digit OTP', isError: true);
       return;
     }
-
     setState(() => _isLoading = true);
-
     try {
-      await ref
-          .read(authNotifierProvider.notifier)
-          .verifyPhoneOTP(verificationId: _verificationId!, smsCode: _otp);
-
+      await ref.read(authNotifierProvider.notifier).verifyPhoneOTP(
+        verificationId: _verificationId!,
+        smsCode: _otp,
+      );
       if (mounted) {
-        Helpers.showSnackBar(context, 'Login successful!');
-        // Check if profile is complete
         final user = ref.read(currentUserProvider).valueOrNull;
         if (user != null && !user.profileComplete) {
           context.go(AppRoutes.completeProfile);
@@ -192,22 +162,10 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen>
         }
       }
     } catch (e) {
-      if (mounted) {
-        Helpers.showSnackBar(context, e.toString(), isError: true);
-      }
+      if (mounted) Helpers.showSnackBar(context, e.toString(), isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _resendOTP() {
-    if (!_canResend) return;
-    setState(() {
-      _otp = '';
-    });
-    _sendOTP();
   }
 
   void _goBack() {
@@ -218,190 +176,86 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen>
         _verificationId = null;
         _resendTimer?.cancel();
       });
-      _slideController.reset();
-      _fadeController.reset();
-      _slideController.forward();
-      _fadeController.forward();
+      _contentController.reset();
+      _contentController.forward();
     } else {
       context.pop();
     }
   }
 
-  void _showCountryCodePicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Select Country Code',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _countryCodes.length,
-                itemBuilder: (context, index) {
-                  final country = _countryCodes[index];
-                  final isSelected = country['code'] == _selectedCountryCode;
-                  return ListTile(
-                    leading: Text(
-                      country['flag']!,
-                      style: const TextStyle(fontSize: 28),
-                    ),
-                    title: Text(country['name']!),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          country['code']!,
-                          style: TextStyle(
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                        if (isSelected) ...[
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.check_circle,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                        ],
-                      ],
-                    ),
-                    onTap: () {
-                      setState(() {
-                        _selectedCountryCode = country['code']!;
-                      });
-                      Navigator.pop(context);
-                    },
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.textPrimary),
           onPressed: _goBack,
         ),
         title: Text(
-          _codeSent ? 'Verify OTP' : 'Phone Login',
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          _codeSent ? 'Verification' : 'Phone Login',
+          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
         centerTitle: true,
       ),
       body: LoadingOverlay(
         isLoading: _isLoading,
         child: SafeArea(
-          child: SlideTransition(
-            position: _slideAnimation,
-            child: FadeTransition(
-              opacity: _fadeAnimation,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const SizedBox(height: 20),
-                      // Hero Icon
                       _buildHeroIcon(),
-                      const SizedBox(height: 40),
-                      // Title
+                      const SizedBox(height: 48),
                       Text(
-                        _codeSent
-                            ? 'Enter Verification Code'
-                            : 'Enter Your Phone Number',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                        textAlign: TextAlign.center,
+                        _codeSent ? 'Enter OTP Code' : 'Phone Number',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          letterSpacing: -0.5,
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      // Subtitle
                       Text(
                         _codeSent
-                            ? 'We\'ve sent a 6-digit verification code to\n$_formattedPhone'
-                            : 'We\'ll send you a one-time verification code',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            ? 'We\'ve sent a 6-digit code to\n$_formattedPhone'
+                            : 'Enter your phone number to receive a verification code',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 15,
                           color: AppColors.textSecondary,
                           height: 1.5,
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 40),
-
+                      const SizedBox(height: 48),
+                      
                       if (!_codeSent) ...[
-                        // Phone Input Section
                         _buildPhoneInput(),
-                        const SizedBox(height: 32),
-                        // Send OTP Button
+                        const SizedBox(height: 40),
                         PrimaryButton(
-                          text: 'Send OTP',
+                          text: 'Send Code',
                           onPressed: _sendOTP,
                           isLoading: _isLoading,
                         ),
                       ] else ...[
-                        // OTP Input Section
-                        _buildOTPInput(),
-                        const SizedBox(height: 24),
-                        // Resend Timer
-                        _buildResendSection(),
-                        const SizedBox(height: 32),
-                        // Verify Button
+                        _buildOTPSection(),
+                        const SizedBox(height: 40),
                         PrimaryButton(
-                          text: 'Verify & Continue',
+                          text: 'Verify OTP',
                           onPressed: _otp.length == 6 ? _verifyOTP : null,
                           isLoading: _isLoading,
                         ),
                       ],
-
-                      const SizedBox(height: 32),
-                      // Email Login Option
-                      _buildEmailLoginOption(),
                     ],
                   ),
                 ),
@@ -414,333 +268,155 @@ class _PhoneLoginScreenState extends ConsumerState<PhoneLoginScreen>
   }
 
   Widget _buildHeroIcon() {
-    return Hero(
-      tag: 'phone_icon',
-      child: Container(
-        width: 120,
-        height: 120,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primary.withOpacity(0.1),
-              AppColors.primary.withOpacity(0.2),
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        color: const Color(0xFF10B981).withOpacity(0.08),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Container(
+          width: 88,
+          height: 88,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF10B981), Color(0xFF34D399)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF10B981).withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
             ],
           ),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.2),
-              blurRadius: 30,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(
-              _codeSent ? Icons.message_rounded : Icons.phone_android,
-              size: 56,
-              color: AppColors.primary,
-            ),
-            if (_codeSent)
-              Positioned(
-                top: 20,
-                right: 20,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: AppColors.success,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check, size: 12, color: Colors.white),
-                ),
-              ),
-          ],
+          child: Icon(
+            _codeSent ? Icons.shield_rounded : Icons.phone_android_rounded,
+            size: 44,
+            color: Colors.white,
+          ),
         ),
       ),
     );
   }
 
   Widget _buildPhoneInput() {
-    final selectedCountry = _countryCodes.firstWhere(
-      (c) => c['code'] == _selectedCountryCode,
-      orElse: () => _countryCodes.first,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Phone Number',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w600,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+        ],
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: _showCountryPicker,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              decoration: const BoxDecoration(
+                border: Border(right: BorderSide(color: AppColors.border)),
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Country Code Selector
-              InkWell(
-                onTap: _showCountryCodePicker,
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(16),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: const BorderRadius.horizontal(
-                      left: Radius.circular(16),
-                    ),
-                    border: Border(
-                      right: BorderSide(
-                        color: AppColors.border.withOpacity(0.5),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        selectedCountry['flag']!,
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _selectedCountryCode,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.keyboard_arrow_down,
-                        size: 20,
-                        color: AppColors.textSecondary,
-                      ),
-                    ],
-                  ),
-                ),
+              child: Row(
+                children: [
+                  Text(_countryCodes.firstWhere((c) => c['code'] == _selectedCountryCode)['flag']!, style: const TextStyle(fontSize: 20)),
+                  const SizedBox(width: 8),
+                  Text(_selectedCountryCode, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
+                ],
               ),
-              // Phone Number Input
-              Expanded(
-                child: TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontSize: 18,
-                    letterSpacing: 1,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                  decoration: InputDecoration(
-                    hintText: 'Enter 10-digit number',
-                    hintStyle: TextStyle(
-                      color: AppColors.textLight,
-                      fontSize: 16,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                  ),
-                  validator: Validators.phone,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        // Helper text
-        Row(
-          children: [
-            Icon(Icons.info_outline, size: 16, color: AppColors.textLight),
-            const SizedBox(width: 8),
-            Text(
-              'We\'ll send a verification code via SMS',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.textLight),
             ),
-          ],
-        ),
-      ],
+          ),
+          Expanded(
+            child: TextFormField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+              decoration: const InputDecoration(
+                hintText: '00000 00000',
+                hintStyle: TextStyle(color: AppColors.textLight, letterSpacing: 1),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 20),
+              ),
+              validator: Validators.phone,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildOTPInput() {
+  Widget _buildOTPSection() {
     return Column(
       children: [
         OTPInputField(
           length: 6,
           onCompleted: (otp) {
             setState(() => _otp = otp);
-            // Auto-verify when OTP is complete
             _verifyOTP();
           },
-          onChanged: (otp) {
-            setState(() => _otp = otp);
-          },
+          onChanged: (otp) => setState(() => _otp = otp),
         ),
-        const SizedBox(height: 16),
-        // OTP Progress Indicator
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(6, (index) {
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: index < _otp.length
-                    ? AppColors.primary
-                    : AppColors.border,
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResendSection() {
-    return Column(
-      children: [
-        if (!_canResend) ...[
-          Text(
-            'Didn\'t receive the code?',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 8),
+        const SizedBox(height: 32),
+        if (!_canResend)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.timer_outlined,
-                size: 18,
-                color: AppColors.primary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Resend in ${_resendSeconds}s',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ] else ...[
-          TextButton.icon(
-            onPressed: _resendOTP,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Resend OTP'),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-          ),
-        ],
-        const SizedBox(height: 16),
-        // Change number option
-        TextButton(
-          onPressed: _goBack,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.edit_outlined,
-                size: 16,
-                color: AppColors.textSecondary,
-              ),
+              const Icon(Icons.timer_outlined, size: 18, color: AppColors.textSecondary),
               const SizedBox(width: 8),
               Text(
-                'Change phone number',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                'Resend code in ${_resendSeconds}s',
+                style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
               ),
             ],
+          )
+        else
+          TextButton.icon(
+            onPressed: () {
+              setState(() => _otp = '');
+              _sendOTP();
+            },
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Resend OTP Now'),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFF0D7FF2)),
           ),
-        ),
       ],
     );
   }
 
-  Widget _buildEmailLoginOption() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.5)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.email_outlined,
-              color: AppColors.primary,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Prefer Email?',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Login with your email address',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Use Email'),
-          ),
-        ],
+  void _showCountryPicker() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Select Country', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            ..._countryCodes.map((c) => ListTile(
+              leading: Text(c['flag']!, style: const TextStyle(fontSize: 24)),
+              title: Text(c['name']!),
+              trailing: Text(c['code']!, style: const TextStyle(fontWeight: FontWeight.bold)),
+              onTap: () {
+                setState(() => _selectedCountryCode = c['code']!);
+                Navigator.pop(context);
+              },
+            )),
+          ],
+        ),
       ),
     );
   }

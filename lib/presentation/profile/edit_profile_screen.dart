@@ -134,7 +134,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       body: LoadingOverlay(
         isLoading: _isLoading,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
             child: Column(
@@ -143,27 +143,42 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 Center(
                   child: Stack(
                     children: [
-                      CircleAvatar(
-                        radius: 60,
-                        backgroundColor: AppColors.border,
-                        backgroundImage: _selectedImage != null
-                            ? FileImage(_selectedImage!)
-                            : (user?.photoUrl.isNotEmpty == true
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.teal.withOpacity(0.1), // Glowing ring
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.teal.withOpacity(0.5),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                          border: Border.all(color: AppColors.teal.withOpacity(0.3), width: 2),
+                        ),
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundColor: AppColors.darkSurface,
+                          backgroundImage: _selectedImage != null
+                              ? FileImage(_selectedImage!)
+                              : (user?.photoUrl.isNotEmpty == true
                                   ? CachedNetworkImageProvider(user!.photoUrl)
-                                  : null),
-                        child:
-                            _selectedImage == null &&
-                                user?.photoUrl.isEmpty == true
-                            ? Text(
-                                user?.name.isNotEmpty == true
-                                    ? user!.name[0].toUpperCase()
-                                    : '?',
-                                style: const TextStyle(
-                                  fontSize: 48,
-                                  color: AppColors.primary,
-                                ),
-                              )
-                            : null,
+                                  : null) as ImageProvider?,
+                          child: _selectedImage == null &&
+                                  (user?.photoUrl ?? '').isEmpty
+                              ? Text(
+                                  user?.name.isNotEmpty == true
+                                      ? user!.name[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : null,
+                        ),
                       ),
                       Positioned(
                         bottom: 0,
@@ -171,13 +186,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         child: GestureDetector(
                           onTap: _pickImage,
                           child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primary,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.teal,
                               shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.scaffoldBackground, width: 3),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.teal.withOpacity(0.4),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ]
                             ),
                             child: const Icon(
-                              Icons.camera_alt,
+                              Icons.camera_alt_rounded,
                               color: Colors.white,
                               size: 20,
                             ),
@@ -187,16 +210,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 48),
                 // Name field
                 CustomTextField(
                   label: AppStrings.fullName,
                   hint: 'Enter your full name',
                   controller: _nameController,
-                  prefixIcon: Icons.person_outline,
+                  prefixIcon: Icons.person_outline_rounded,
                   validator: Validators.name,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 // Email field (readonly)
                 CustomTextField(
                   label: AppStrings.email,
@@ -205,7 +228,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   prefixIcon: Icons.email_outlined,
                   enabled: false,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 // Phone field
                 CustomTextField(
                   label: AppStrings.phone,
@@ -215,7 +238,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   prefixIcon: Icons.phone_outlined,
                   validator: Validators.phone,
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 48),
                 // Update button
                 PrimaryButton(
                   text: AppStrings.updateProfile,

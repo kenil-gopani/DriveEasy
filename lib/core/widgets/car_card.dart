@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../constants/app_colors.dart';
+import 'car_image.dart';
 
 class CarCard extends StatelessWidget {
   final String id;
@@ -49,13 +49,14 @@ class CarCard extends StatelessWidget {
         width: 200,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: AppColors.shadowLight,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -64,31 +65,12 @@ class CarCard extends StatelessWidget {
           children: [
             Stack(
               children: [
-                ClipRRect(
+                CarImage(
+                  url: imageUrl,
+                  height: 120,
+                  width: double.infinity,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
-                  ),
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      height: 120,
-                      color: AppColors.background,
-                      child: const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      height: 120,
-                      color: AppColors.background,
-                      child: const Icon(
-                        Icons.directions_car,
-                        size: 40,
-                        color: AppColors.textLight,
-                      ),
-                    ),
                   ),
                 ),
                 Positioned(top: 8, right: 8, child: _buildFavoriteButton()),
@@ -100,15 +82,23 @@ class CarCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    brand,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: AppColors.textLight),
+                    brand.toUpperCase(),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     name,
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      letterSpacing: -0.5,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -119,24 +109,28 @@ class CarCard extends StatelessWidget {
                       Row(
                         children: [
                           const Icon(
-                            Icons.star,
-                            color: AppColors.warning,
+                            Icons.star_rounded,
+                            color: Color(0xFFEAB308), // Yellow 500
                             size: 16,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             rating.toStringAsFixed(1),
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
                           ),
                         ],
                       ),
                       Text(
-                        '\$${pricePerDay.toStringAsFixed(0)}/day',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        '\$${pricePerDay.toStringAsFixed(0)}/d',
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -155,122 +149,118 @@ class CarCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: AppColors.shadowLight,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.horizontal(
-                left: Radius.circular(16),
-              ),
-              child: CachedNetworkImage(
-                imageUrl: imageUrl,
-                height: 130,
-                width: 130,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
+            // Horizontal layout for full card? The previous code had row.
+            Row(
+              children: [
+                CarImage(
+                  url: imageUrl,
                   height: 130,
-                  width: 130,
-                  color: AppColors.background,
-                  child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                  width: 140,
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(16),
                   ),
                 ),
-                errorWidget: (context, url, error) => Container(
-                  height: 130,
-                  width: 130,
-                  color: AppColors.background,
-                  child: const Icon(
-                    Icons.directions_car,
-                    size: 40,
-                    color: AppColors.textLight,
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                brand,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: AppColors.textLight),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                name,
-                                style: Theme.of(context).textTheme.titleMedium,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        _buildFavoriteButton(),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildSpecChip(
-                          Icons.airline_seat_recline_normal,
-                          '$seats',
-                        ),
-                        const SizedBox(width: 8),
-                        _buildSpecChip(Icons.local_gas_station, fuelType),
-                        const SizedBox(width: 8),
-                        _buildSpecChip(Icons.settings, transmission),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.star,
-                              color: AppColors.warning,
-                              size: 16,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    brand.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    name,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      letterSpacing: -0.5,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
-                            const SizedBox(width: 4),
+                            _buildFavoriteButton(),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            _buildSpecIcon(Icons.airline_seat_recline_normal, '$seats'),
+                            const SizedBox(width: 12),
+                            _buildSpecIcon(Icons.local_gas_station, fuelType),
+                            const SizedBox(width: 12),
+                            _buildSpecIcon(Icons.settings, transmission),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.star_rounded,
+                                  color: Color(0xFFEAB308), // Yellow 500
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  rating.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
                             Text(
-                              rating.toStringAsFixed(1),
-                              style: Theme.of(context).textTheme.bodySmall,
+                              '\$${pricePerDay.toStringAsFixed(0)} / day',
+                              style: const TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
                           ],
                         ),
-                        Text(
-                          '\$${pricePerDay.toStringAsFixed(0)}/day',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -282,48 +272,43 @@ class CarCard extends StatelessWidget {
     return GestureDetector(
       onTap: onFavoriteToggle,
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Colors.white,
           shape: BoxShape.circle,
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow.withOpacity(0.1),
+              color: AppColors.shadowLight,
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Icon(
-          isFavorite ? Icons.favorite : Icons.favorite_border,
-          color: isFavorite ? AppColors.error : AppColors.textLight,
+          isFavorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
+          color: isFavorite ? const Color(0xFFEF4444) : AppColors.textSecondary,
           size: 18,
         ),
       ),
     );
   }
 
-  Widget _buildSpecChip(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: AppColors.textSecondary),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-            ),
+  Widget _buildSpecIcon(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: AppColors.textSecondary),
+        const SizedBox(width: 4),
+        Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textSecondary,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
