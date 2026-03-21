@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/car_loading_widget.dart';
+import '../../core/widgets/car_image.dart';
 import '../../core/widgets/app_dialog.dart';
 import '../../core/utils/helpers.dart';
 import '../../data/models/booking_model.dart';
 import '../providers/booking_provider.dart';
 
 class BookingHistoryScreen extends ConsumerStatefulWidget {
-  const BookingHistoryScreen({super.key});
+  final bool showBackButton;
+  
+  const BookingHistoryScreen({super.key, this.showBackButton = false});
 
   @override
   ConsumerState<BookingHistoryScreen> createState() => _BookingHistoryScreenState();
@@ -34,6 +37,12 @@ class _BookingHistoryScreenState extends ConsumerState<BookingHistoryScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
+        leading: widget.showBackButton 
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => context.go('/home'),
+              )
+            : null,
       ),
       body: Column(
         children: [
@@ -213,18 +222,13 @@ class BookingCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Car Image
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: CarImage(
+                    url: booking.carImage,
+                    width: 96,
+                    height: 96,
                     borderRadius: BorderRadius.circular(8),
-                  ),
-                  clipBehavior: Clip.hardEdge,
-                  child: CachedNetworkImage(
-                    imageUrl: booking.carImage,
-                    fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => const Icon(Icons.directions_car, color: AppColors.textLight),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -257,7 +261,7 @@ class BookingCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '\$${booking.totalPrice.toStringAsFixed(0)} Total',
+                        '₹${booking.totalPrice.toStringAsFixed(0)} Total',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -558,14 +562,14 @@ class _EditBookingSheetState extends ConsumerState<EditBookingSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '$_totalDays days × \$${_pricePerDay.toStringAsFixed(0)}/day',
+                  '$_totalDays days × ₹${_pricePerDay.toStringAsFixed(0)}/day',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                   ),
                 ),
                 Text(
-                  '\$${_newTotal.toStringAsFixed(0)}',
+                  '₹${_newTotal.toStringAsFixed(0)}',
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,

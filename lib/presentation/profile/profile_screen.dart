@@ -11,6 +11,7 @@ import '../../core/widgets/car_loading_widget.dart';
 import '../../data/models/user_model.dart';
 import '../../data/seed_data.dart';
 import '../providers/auth_provider.dart';
+import '../../core/utils/helpers.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -331,24 +332,11 @@ class ProfileScreen extends ConsumerWidget {
                         );
                         if (confirm && context.mounted) {
                           try {
-                            final result = await SeedData.seedCarsForCurrentUser();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(result),
-                                  backgroundColor: const Color(0xFF4CAF50),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
+                            await SeedData.seedCarsForCurrentUser();
+                            // Success: seeded silently
                           } catch (e) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error: $e'),
-                                  backgroundColor: AppColors.error,
-                                ),
-                              );
+                              Helpers.showSnackBar(context, 'Seed failed: $e', isError: true);
                             }
                           }
                         }

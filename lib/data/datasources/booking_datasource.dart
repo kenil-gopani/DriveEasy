@@ -102,10 +102,11 @@ class BookingDatasource {
   Future<List<BookingModel>> getBookingsByStatus(String status) async {
     final snapshot = await _bookingsCollection
         .where('status', isEqualTo: status)
-        .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs
+    final list = snapshot.docs
         .map((doc) => BookingModel.fromMap(doc.data(), doc.id))
         .toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
   }
 }

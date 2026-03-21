@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/helpers.dart';
 
 /// Allows the user to pick multiple images from the device gallery
 /// and displays them in an animated 2-column grid.
@@ -31,13 +32,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not access gallery: $e'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        Helpers.showSnackBar(context, 'Could not access gallery: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isPicking = false);
@@ -48,7 +43,6 @@ class _GalleryScreenState extends State<GalleryScreen> {
   Future<void> _saveAllToDevice() async {
     if (_selectedImages.isEmpty) return;
     setState(() => _isSaving = true);
-    int saved = 0;
     try {
       final hasAccess = await Gal.hasAccess(toAlbum: true);
       if (!hasAccess) {
@@ -56,36 +50,11 @@ class _GalleryScreenState extends State<GalleryScreen> {
       }
       for (final file in _selectedImages) {
         await Gal.putImage(file.path, album: 'DriveEasy');
-        saved++;
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.check_circle_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text('$saved image${saved == 1 ? '' : 's'} saved to gallery!'),
-              ],
-            ),
-            backgroundColor: AppColors.teal,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      // Success: images saved — no notification needed
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Save failed: $e'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        Helpers.showSnackBar(context, 'Save failed: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

@@ -1,8 +1,16 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'routes.dart';
 import '../core/theme/app_theme.dart';
 
+class MyCustomScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+  };
+}
 
 class RentCarProApp extends ConsumerWidget {
   const RentCarProApp({super.key});
@@ -16,6 +24,7 @@ class RentCarProApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Drive Easy',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: MyCustomScrollBehavior(),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light, // Forced directly to new light redesign

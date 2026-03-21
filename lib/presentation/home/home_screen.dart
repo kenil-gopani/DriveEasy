@@ -9,6 +9,7 @@ import '../providers/car_provider.dart';
 import '../../data/models/car_model.dart';
 import '../../core/widgets/car_loading_widget.dart';
 import '../../core/widgets/speed_dial_fab.dart';
+import '../../core/widgets/car_image.dart';
 import '../providers/favorites_provider.dart';
 import '../providers/notification_provider.dart';
 import '../providers/news_provider.dart';
@@ -156,17 +157,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
 
           // --- News Section ---
-          SliverToBoxAdapter(child: _buildSectionTitle('Latest Auto News')),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 24, bottom: 8),
+              child: Row(
+                children: [
+                  _buildSectionTitle('Latest Auto News', showSeeAll: false),
+                  const Spacer(),
+                  const Padding(
+                    padding: EdgeInsets.only(right: 24),
+                    child: Icon(Icons.flash_on_rounded, color: AppColors.accent, size: 20),
+                  ),
+                ],
+              ),
+            ),
+          ),
           SliverToBoxAdapter(
             child: SizedBox(
-              height: 240,
+              height: 280, // Increased height for more premium presence
               child: carNews.when(
                 data: (articles) {
                   if (articles.isEmpty) {
                     return _buildEmptyState('No news right now');
                   }
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     scrollDirection: Axis.horizontal,
                     itemCount: articles.length,
                     itemBuilder: (context, index) {
@@ -174,11 +189,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     },
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 3,
+                  itemBuilder: (_, __) => _buildNewsShimmer(),
+                ),
                 error: (e, _) => Center(
-                  child: Text(
-                    'Could not load news',
-                    style: TextStyle(color: AppColors.textSecondary),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, color: AppColors.textSecondary),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Could not load car news',
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -208,8 +235,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     radius: 24,
                     backgroundColor: AppColors.border,
                     backgroundImage: CachedNetworkImageProvider(
-                      ref.watch(currentUserProvider).valueOrNull?.photoUrl ??
-                          'https://ui-avatars.com/api/?name=${Uri.encodeComponent(userName)}&background=random',
+                      (ref.watch(currentUserProvider).valueOrNull?.photoUrl ?? '').isNotEmpty
+                          ? ref.watch(currentUserProvider).valueOrNull!.photoUrl
+                          : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(userName)}&background=random',
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -445,29 +473,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   children: [
                     Hero(
                       tag: 'car_image_${car.id}',
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                        child: CachedNetworkImage(
-                          imageUrl: car.firstImage,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(
-                            height: 200,
-                            color: AppColors.background,
-                            child: const Center(
-                              child: CircularProgressIndicator(color: AppColors.primary),
-                            ),
-                          ),
-                          errorWidget: (_, __, ___) => Container(
-                            height: 200,
-                            color: AppColors.background,
-                            child: const Icon(
-                              Icons.directions_car,
-                              size: 60,
-                              color: AppColors.textLight,
-                            ),
-                          ),
+                      child: CarImage(
+                        url: car.firstImage,
+                        height: 200,
+                        width: double.infinity,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(28),
                         ),
                       ),
                     ),
@@ -496,7 +507,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '4.9',
+                              car.rating.toStringAsFixed(1),
                               style: const TextStyle(
                                 color: AppColors.textPrimary,
                                 fontSize: 12,
@@ -651,26 +662,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // Left Image
             Hero(
               tag: 'car_image_near_${car.id}',
-              child: ClipRRect(
+              child: CarImage(
+                url: car.firstImage,
+                width: 110,
+                height: 110,
                 borderRadius: BorderRadius.circular(16),
-                child: CachedNetworkImage(
-                  imageUrl: car.firstImage,
-                  width: 110,
-                  height: 110,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    width: 110,
-                    height: 110,
-                    color: AppColors.background,
-                    child: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    width: 110,
-                    height: 110,
-                    color: AppColors.background,
-                    child: const Icon(Icons.directions_car, size: 40, color: AppColors.textLight),
-                  ),
-                ),
               ),
             ),
             const SizedBox(width: 16),
@@ -783,124 +779,176 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       },
       child: Container(
-        width: 280,
-        margin: const EdgeInsets.only(right: 16),
+        width: 300,
+        margin: const EdgeInsets.only(right: 18),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadowLight,
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: AppColors.shadowLight.withOpacity(0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                  child: article.imageUrl.isNotEmpty
-                      ? Image.network(
-                          article.imageUrl,
-                          height: 130,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            height: 130,
-                            color: AppColors.background,
-                            child: const Icon(
-                              Icons.newspaper,
-                              size: 40,
-                              color: AppColors.textLight,
-                            ),
-                          ),
-                        )
-                      : Container(
-                          height: 130,
-                          color: AppColors.background,
-                          child: const Icon(
-                            Icons.newspaper,
-                            size: 40,
-                            color: AppColors.textLight,
-                          ),
-                        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Stack(
+            children: [
+              // Article Image with Placeholder
+              CachedNetworkImage(
+                imageUrl: article.imageUrl,
+                height: double.infinity,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: AppColors.surface,
+                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                 ),
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.shadowLight,
-                          blurRadius: 4,
-                        ),
+                errorWidget: (context, url, error) => Container(
+                  color: AppColors.surface,
+                  child: const Icon(Icons.image_not_supported_rounded, color: AppColors.textLight),
+                ),
+              ),
+
+              // Deep Dark Gradient Overlay from bottom
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withOpacity(0.0),
+                        Colors.black.withOpacity(0.2),
+                        Colors.black.withOpacity(0.8),
+                        Colors.black,
                       ],
-                    ),
-                    child: Text(
-                      article.sourceName,
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      stops: const [0.0, 0.3, 0.7, 1.0],
                     ),
                   ),
                 ),
-              ],
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+              ),
+
+              // Content Layout
+              Padding(
+                padding: const EdgeInsets.all(20),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Source Label with Favicon
+                    Row(
+                      children: [
+                        if (article.sourceFavicon.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: CachedNetworkImage(
+                              imageUrl: article.sourceFavicon,
+                              width: 14,
+                              height: 14,
+                              errorWidget: (_, __, ___) => const Icon(Icons.public, size: 14, color: Colors.white70),
+                            ),
+                          ),
+                        const SizedBox(width: 8),
+                        Text(
+                          article.sourceName.toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // News Title
                     Text(
                       article.title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                        height: 1.3,
+                        height: 1.2,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const Spacer(),
-                    Text(
-                      _formatNewsDate(article.publishedAt),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    const SizedBox(height: 12),
+                    // Date & Quick Action
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time_rounded, size: 12, color: Colors.white54),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formatNewsDate(article.publishedAt),
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 11,
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            children: [
+                              Text(
+                                'Read',
+                                style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_ios_rounded, size: 8, color: Colors.white),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildNewsShimmer() {
+    return Container(
+      width: 300,
+      margin: const EdgeInsets.only(right: 18),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+      ),
+    );
+  }
 
-  String _formatNewsDate(DateTime date) {
-    final diff = DateTime.now().difference(date);
-    if (diff.inDays > 0) {
-      return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
-    } else if (diff.inHours > 0) {
-      return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
-    } else {
-      return '${diff.inMinutes} min${diff.inMinutes == 1 ? '' : 's'} ago';
+
+  String _formatNewsDate(String dateStr) {
+    if (dateStr.isEmpty) return 'Recent';
+    try {
+      final date = DateTime.parse(dateStr);
+      final diff = DateTime.now().difference(date);
+      if (diff.inDays > 0) {
+        return '${diff.inDays} day${diff.inDays == 1 ? '' : 's'} ago';
+      } else if (diff.inHours > 0) {
+        return '${diff.inHours} hour${diff.inHours == 1 ? '' : 's'} ago';
+      } else {
+        return '${diff.inMinutes} min${diff.inMinutes == 1 ? '' : 's'} ago';
+      }
+    } catch (_) {
+      // Return simple safe string if unparseable
+      return dateStr.length > 10 ? dateStr.substring(0, 10) : dateStr;
     }
   }
 
@@ -1007,27 +1055,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         child: Row(
           children: [
-            ClipRRect(
+            CarImage(
+              url: car.firstImage,
+              width: 120,
+              height: 100,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 bottomLeft: Radius.circular(16),
-              ),
-              child: CachedNetworkImage(
-                imageUrl: car.firstImage,
-                width: 120,
-                height: 100,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
-                  width: 120,
-                  height: 100,
-                  color: AppColors.background,
-                ),
-                errorWidget: (_, __, ___) => Container(
-                  width: 120,
-                  height: 100,
-                  color: AppColors.background,
-                  child: const Icon(Icons.directions_car),
-                ),
               ),
             ),
             Expanded(

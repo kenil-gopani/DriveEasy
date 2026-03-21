@@ -7,7 +7,8 @@ class NewsArticle {
   final String url;
   final String imageUrl;
   final String sourceName;
-  final DateTime publishedAt;
+  final String sourceFavicon;
+  final String publishedAt;
 
   NewsArticle({
     required this.title,
@@ -15,51 +16,60 @@ class NewsArticle {
     required this.url,
     required this.imageUrl,
     required this.sourceName,
+    required this.sourceFavicon,
     required this.publishedAt,
   });
 
   factory NewsArticle.fromJson(Map<String, dynamic> json) {
     return NewsArticle(
-      title: json['title'] ?? 'No Title',
+      title: json['title'] ?? 'Auto News India',
       description: json['description'] ?? '',
-      url: json['url'] ?? '',
-      imageUrl: json['urlToImage'] ?? '',
-      sourceName: json['source']?['name'] ?? 'Unknown',
-      publishedAt:
-          DateTime.tryParse(json['publishedAt'] ?? '') ?? DateTime.now(),
+      url: json['link'] ?? '',
+      imageUrl: json['image_url'] ?? 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80&w=600',
+      sourceName: json['source_name'] ?? 'Car News',
+      sourceFavicon: json['source_icon'] ?? '',
+      publishedAt: json['pubDate'] ?? '',
     );
   }
 }
 
 class NewsService {
-  // Using a free NewsAPI.org key. (Note: in production this should be in an env file)
-  static const String _apiKey = 'f892348570ab418fa7ee7848c4ae171f';
-  static const String _baseUrl = 'https://newsapi.org/v2/everything';
+  static const String _baseUrl = 'https://newsdata.io/api/1/latest';
+  static const String _apiKey = 'pub_8f606cf95eaa4859b556f98547c6c41c';
 
   Future<List<NewsArticle>> fetchCarNews() async {
     try {
-      final uri = Uri.parse(
-        '$_baseUrl?q="cars" OR "auto show" OR "electric vehicle"&sortBy=publishedAt&language=en&apiKey=$_apiKey',
+      // Strictly matched to user's specified NewsData.io dashboard parameters
+      final Uri uri = Uri.parse(
+        '$_baseUrl?apikey=$_apiKey'
+        '&q=car%20india'
+        '&country=in'
+        '&language=en'
+        '&category=technology'
+        '&timezone=asia/kolkata'
+        '&prioritydomain=top'
+        '&image=1'
+        '&video=0'
+        '&removeduplicate=1'
       );
 
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final List articlesList = data['articles'] ?? [];
-
-        return articlesList
-            .where(
-              (json) => json['title'] != null && json['urlToImage'] != null,
-            )
-            .map((json) => NewsArticle.fromJson(json))
-            .take(10) // Limit to top 10 recent articles
-            .toList();
+        
+        if (data['status'] == 'success') {
+          final List results = data['results'] ?? [];
+          return results.map((json) => NewsArticle.fromJson(json)).toList();
+        } else {
+          throw Exception('API error: ${data['message'] ?? 'Please check your NewsData dashboard.'}');
+        }
       } else {
-        throw Exception('Failed to load news: ${response.statusCode}');
+        throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Network error while fetching news: $e');
+      print('NewsData.io error: $e');
+      throw Exception('Could not refresh car news from India.');
     }
   }
 }

@@ -40,24 +40,7 @@ class _NotificationsDemoScreenState extends State<NotificationsDemoScreen> {
       title: '🚗 DriveEasy',
       body: 'Your booking is confirmed! Enjoy your ride.',
     );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(
-              Icons.notifications_active_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-            SizedBox(width: 8),
-            Text('Notification sent!'),
-          ],
-        ),
-        backgroundColor: AppColors.teal,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // Notification dispatched — no in-app snackbar needed
   }
 
   Future<void> _scheduleIn5s() async {
@@ -68,15 +51,7 @@ class _NotificationsDemoScreenState extends State<NotificationsDemoScreen> {
       delaySeconds: 5,
     );
     _startCountdown();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Reminder scheduled for 5 seconds — try backgrounding the app!',
-        ),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // Countdown UI already provides visual feedback — no snackbar needed
   }
 
   @override

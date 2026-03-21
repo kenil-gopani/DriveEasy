@@ -9,6 +9,7 @@ import '../../data/models/car_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/favorites_provider.dart';
 
+
 class FavoritesScreen extends ConsumerWidget {
   const FavoritesScreen({super.key});
 
@@ -47,44 +48,7 @@ class FavoritesScreen extends ConsumerWidget {
                       .toggleFavorite(userId, car.id);
 
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context)
-                      ..hideCurrentSnackBar()
-                      ..showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const Icon(
-                                Icons.favorite_border,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  '${car.name} removed from favorites',
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: AppColors.textSecondary,
-                          behavior: SnackBarBehavior.floating,
-                          margin: const EdgeInsets.all(16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          duration: const Duration(seconds: 3),
-                          action: SnackBarAction(
-                            label: 'Undo',
-                            textColor: AppColors.accent,
-                            onPressed: () {
-                              ref
-                                  .read(favoritesNotifierProvider.notifier)
-                                  .toggleFavorite(userId, car.id);
-                            },
-                          ),
-                        ),
-                      );
+                    // Removal is instant via Dismissible animation — no snackbar needed
                   }
                 },
                 onFavoriteToggle: () {

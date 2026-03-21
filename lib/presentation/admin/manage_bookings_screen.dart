@@ -142,7 +142,7 @@ class _AdminBookingCard extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      '\$${booking.totalPrice.toStringAsFixed(0)}',
+                      '₹${booking.totalPrice.toStringAsFixed(0)}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,

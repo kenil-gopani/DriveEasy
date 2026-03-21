@@ -19,13 +19,14 @@ class NotificationDatasource {
   Stream<List<NotificationModel>> userNotificationsStream(String userId) {
     return _notificationsCollection
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
+        .map((snapshot) {
+          final list = snapshot.docs
               .map((doc) => NotificationModel.fromMap(doc.data(), doc.id))
-              .toList(),
-        );
+              .toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   Future<void> markAsRead(String notificationId) async {
@@ -72,23 +73,25 @@ class NotificationDatasource {
   Future<List<ReviewModel>> getCarReviews(String carId) async {
     final snapshot = await _reviewsCollection
         .where('carId', isEqualTo: carId)
-        .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs
+    final list = snapshot.docs
         .map((doc) => ReviewModel.fromMap(doc.data(), doc.id))
         .toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
   }
 
   Stream<List<ReviewModel>> carReviewsStream(String carId) {
     return _reviewsCollection
         .where('carId', isEqualTo: carId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
+        .map((snapshot) {
+          final list = snapshot.docs
               .map((doc) => ReviewModel.fromMap(doc.data(), doc.id))
-              .toList(),
-        );
+              .toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   Future<void> addReview(ReviewModel review) async {
@@ -103,11 +106,12 @@ class NotificationDatasource {
   Future<List<FavoriteModel>> getUserFavorites(String userId) async {
     final snapshot = await _favoritesCollection
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
         .get();
-    return snapshot.docs
+    final list = snapshot.docs
         .map((doc) => FavoriteModel.fromMap(doc.data(), doc.id))
         .toList();
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
   }
 
   Stream<List<FavoriteModel>> userFavoritesStream(String userId) {

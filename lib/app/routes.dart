@@ -191,7 +191,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.bookingHistory,
-        builder: (context, state) => const BookingHistoryScreen(),
+        builder: (context, state) => const BookingHistoryScreen(showBackButton: true),
       ),
       GoRoute(
         path: AppRoutes.profile,

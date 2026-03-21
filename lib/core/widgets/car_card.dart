@@ -125,7 +125,7 @@ class CarCard extends StatelessWidget {
                         ],
                       ),
                       Text(
-                        '\$${pricePerDay.toStringAsFixed(0)}/d',
+                        '₹${_formatPrice(pricePerDay)}/day',
                         style: const TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
@@ -247,7 +247,7 @@ class CarCard extends StatelessWidget {
                               ],
                             ),
                             Text(
-                              '\$${pricePerDay.toStringAsFixed(0)} / day',
+                              '₹${_formatPrice(pricePerDay)} / day',
                               style: const TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,
@@ -310,5 +310,20 @@ class CarCard extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  /// Formats a price with Indian comma notation (1,00,000)
+  static String _formatPrice(double price) {
+    final p = price.toInt();
+    if (p >= 100000) {
+      final lakh = p ~/ 100000;
+      final rem = (p % 100000) ~/ 1000;
+      return rem > 0 ? '$lakh,${rem.toString().padLeft(2, '0')},000' : '${lakh}L';
+    } else if (p >= 1000) {
+      final k = p ~/ 1000;
+      final rem = p % 1000;
+      return rem > 0 ? '$k,${rem.toString().padLeft(3, '0')}' : '${k}K';
+    }
+    return p.toString();
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import '../../core/widgets/car_image.dart';
 import '../../app/routes.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/communication_service.dart';
@@ -105,18 +106,17 @@ class _CarDetailsScreenState extends ConsumerState<CarDetailsScreen> {
                       setState(() => _currentImageIndex = index);
                     },
                     itemBuilder: (context, index) {
-                      return Hero(
-                        tag: 'car_image_details_${car.id}_$index',
-                        child: CachedNetworkImage(
-                          imageUrl: car.images[index],
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => const Center(
-                            child: CircularProgressIndicator(color: AppColors.primary),
-                          ),
-                          errorWidget: (_, __, ___) => const Icon(
-                            Icons.directions_car,
-                            size: 80,
-                            color: AppColors.textLight,
+                      return GestureDetector(
+                        onTap: () => _openFullScreenImage(context, car, index),
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: Hero(
+                            tag: 'car_image_details_${car.id}_$index',
+                            child: CarImage(
+                              url: car.images[index],
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                            ),
                           ),
                         ),
                       );
@@ -175,6 +175,59 @@ class _CarDetailsScreenState extends ConsumerState<CarDetailsScreen> {
               ),
             ),
           ),
+          
+          // Left/Right Navigation Arrows
+          if (car.images.length > 1) ...[
+            Positioned(
+              left: 16,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _buildCircleButton(
+                  icon: Icons.chevron_left_rounded,
+                  onTap: () {
+                    if (_currentImageIndex > 0) {
+                      _pageController.previousPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    } else {
+                      _pageController.animateToPage(
+                        car.images.length - 1,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              right: 16,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _buildCircleButton(
+                  icon: Icons.chevron_right_rounded,
+                  onTap: () {
+                    if (_currentImageIndex < car.images.length - 1) {
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    } else {
+                      _pageController.animateToPage(
+                        0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                ),
+              ),
+            ),
+          ],
+
           // Page Indicator
           if (car.images.length > 1)
             Positioned(
@@ -185,16 +238,28 @@ class _CarDetailsScreenState extends ConsumerState<CarDetailsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   car.images.length,
-                  (index) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: _currentImageIndex == index ? 24 : 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      color: _currentImageIndex == index
-                          ? AppColors.primary
-                          : Colors.white.withOpacity(0.5),
+                  (index) => GestureDetector(
+                    onTap: () {
+                      _pageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: _currentImageIndex == index ? 24 : 8,
+                        height: 8,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
+                          color: _currentImageIndex == index
+                              ? AppColors.primary
+                              : Colors.white.withOpacity(0.5),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -239,7 +304,7 @@ class _CarDetailsScreenState extends ConsumerState<CarDetailsScreen> {
                           const Icon(Icons.star_rounded, size: 18, color: AppColors.warning),
                           const SizedBox(width: 4),
                           Text(
-                            '4.9',
+                            car.rating.toStringAsFixed(1),
                             style: const TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 14,
@@ -247,7 +312,7 @@ class _CarDetailsScreenState extends ConsumerState<CarDetailsScreen> {
                             ),
                           ),
                           Text(
-                            ' (120 trips)',
+                            ' (${car.reviewCount} trips)',
                             style: const TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 14,
@@ -590,6 +655,170 @@ class _CarDetailsScreenState extends ConsumerState<CarDetailsScreen> {
           ],
         ),
         child: Icon(icon, color: AppColors.textPrimary, size: 24),
+      ),
+    );
+  }
+
+  void _openFullScreenImage(BuildContext context, dynamic car, int initialIndex) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (context) => FullScreenImageGallery(
+          car: car,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
+  }
+}
+
+class FullScreenImageGallery extends StatefulWidget {
+  final dynamic car;
+  final int initialIndex;
+
+  const FullScreenImageGallery({
+    super.key,
+    required this.car,
+    required this.initialIndex,
+  });
+
+  @override
+  State<FullScreenImageGallery> createState() => _FullScreenImageGalleryState();
+}
+
+class _FullScreenImageGalleryState extends State<FullScreenImageGallery> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.car.images.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              return InteractiveViewer(
+                minScale: 1.0,
+                maxScale: 4.0,
+                child: Center(
+                  child: Hero(
+                    tag: 'car_image_details_${widget.car.id}_$index',
+                    child: CarImage(
+                      url: widget.car.images[index],
+                      fit: BoxFit.contain, // Fit contain to see full photo
+                      width: double.infinity,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          
+          // Navigation Arrows for Desktop/Web
+          if (widget.car.images.length > 1) ...[
+            Positioned(
+              left: 16,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: IconButton(
+                  icon: const Icon(Icons.chevron_left_rounded, color: Colors.white, size: 48),
+                  onPressed: () {
+                    if (_currentIndex > 0) {
+                      _pageController.previousPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    } else {
+                      _pageController.animateToPage(
+                        widget.car.images.length - 1,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              right: 16,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: IconButton(
+                  icon: const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 48),
+                  onPressed: () {
+                    if (_currentIndex < widget.car.images.length - 1) {
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    } else {
+                      _pageController.animateToPage(
+                        0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                ),
+              ),
+            ),
+          ],
+          
+          // Page Indicator
+          if (widget.car.images.length > 1)
+            Positioned(
+              bottom: 40,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  widget.car.images.length,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: _currentIndex == index ? 24 : 8,
+                    height: 8,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: _currentIndex == index
+                          ? AppColors.primary
+                          : Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

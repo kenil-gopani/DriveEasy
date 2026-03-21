@@ -5,53 +5,38 @@ import '../constants/app_colors.dart';
 
 class Helpers {
   static void showToast(String message, {bool isError = false}) {
+    // Only show toasts for errors
+    if (!isError) return;
     Fluttertoast.showToast(
       msg: message,
       toastLength: Toast.LENGTH_SHORT,
       gravity: ToastGravity.BOTTOM,
-      backgroundColor: isError ? AppColors.error : AppColors.success,
-      textColor: AppColors.textWhite,
+      backgroundColor: const Color(0xFFFF3B30),
+      textColor: Colors.white,
       fontSize: 14,
     );
   }
 
+  /// Shows a professional error snackbar. Non-error calls are silently ignored.
   static void showSnackBar(
     BuildContext context,
     String message, {
     bool isError = false,
     SnackBarAction? action,
   }) {
+    // ── Only display for actual errors ─────────────────────────────────────
+    if (!isError) return;
+
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                isError
-                    ? Icons.error_outline_rounded
-                    : Icons.check_circle_outline_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: isError ? AppColors.error : AppColors.success,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
           behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          duration: Duration(seconds: isError ? 4 : 2),
-          action: action,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          duration: const Duration(seconds: 5),
+          content: _ErrorSnackBarContent(message: message, action: action),
         ),
       );
   }
@@ -69,7 +54,7 @@ class Helpers {
   }
 
   static String formatPrice(double price) {
-    return '\$${price.toStringAsFixed(2)}';
+    return '₹${price.toStringAsFixed(0)}';
   }
 
   static int calculateDays(DateTime start, DateTime end) {
@@ -121,5 +106,111 @@ class Helpers {
       default:
         return '💰';
     }
+  }
+}
+
+// ── Premium Error Snackbar UI ──────────────────────────────────────────────
+
+class _ErrorSnackBarContent extends StatelessWidget {
+  final String message;
+  final SnackBarAction? action;
+
+  const _ErrorSnackBarContent({required this.message, this.action});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1C1E), // Deep dark background
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFFF3B30).withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF3B30).withOpacity(0.15),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 30,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Red accent bar on the left
+              Container(width: 4, color: const Color(0xFFFF3B30)),
+              const SizedBox(width: 14),
+              // Error icon
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF3B30).withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.error_rounded,
+                  color: Color(0xFFFF3B30),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Message
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Error',
+                        style: TextStyle(
+                          color: Color(0xFFFF3B30),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        message,
+                        style: const TextStyle(
+                          color: Color(0xFFEAEAEA),
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Dismiss button
+              GestureDetector(
+                onTap: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+                child: const Padding(
+                  padding: EdgeInsets.all(14),
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: Color(0xFF636366),
+                    size: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

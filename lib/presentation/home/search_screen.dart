@@ -81,7 +81,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             },
           ),
         ),
-        automaticallyImplyLeading: false, // Don't show back arrow if it's a root tab.
+        automaticallyImplyLeading: true, // Allow back navigation
       ),
       body: displayAsync.when(
         data: (cars) {

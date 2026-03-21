@@ -72,7 +72,7 @@ class AdminCarListScreen extends ConsumerWidget {
                     children: [
                       Text('${car.brand} • ${car.category}'),
                       Text(
-                        '\$${car.pricePerDay.toStringAsFixed(0)}/day',
+                        '₹${car.pricePerDay.toStringAsFixed(0)}/day',
                         style: TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,

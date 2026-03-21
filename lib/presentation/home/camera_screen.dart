@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/helpers.dart';
 
 /// Opens the device camera to capture a photo, then shows a preview
 /// with Retake and Save options.
@@ -45,13 +46,7 @@ class _CameraScreenState extends State<CameraScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isCapturing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Camera error: $e'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        Helpers.showSnackBar(context, 'Camera error: $e', isError: true);
       }
     }
   }
@@ -66,30 +61,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   void _save() {
     setState(() => _isSaved = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(
-              Icons.check_circle_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Photo saved! Path: ${_capturedImage?.name ?? ''}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppColors.teal,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    // Success state is shown via the overlay UI, no snackbar needed
   }
 
   @override

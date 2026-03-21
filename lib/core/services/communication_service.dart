@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/helpers.dart';
 
 /// A utility service for launching native device communication features:
 /// phone calls, SMS, and email.
@@ -79,12 +80,6 @@ class CommunicationService {
   // ─── Helper ──────────────────────────────────────────────────────────────
 
   static void _showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    Helpers.showSnackBar(context, message, isError: true);
   }
 }
