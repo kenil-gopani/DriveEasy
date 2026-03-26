@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,7 @@ import '../providers/car_provider.dart';
 import '../../data/models/car_model.dart';
 import '../../core/widgets/car_loading_widget.dart';
 import '../../core/widgets/speed_dial_fab.dart';
+import '../../core/widgets/ai_assistant_sheet.dart';
 import '../../core/widgets/car_image.dart';
 import '../providers/favorites_provider.dart';
 import '../providers/notification_provider.dart';
@@ -45,76 +47,198 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       floatingActionButton: canListCars && _currentIndex == 0
-          // Admin: show Add Car FAB on home tab only
           ? FloatingActionButton(
               onPressed: () => context.push(AppRoutes.adminAddCar),
               backgroundColor: AppColors.accent,
               elevation: 4,
               child: const Icon(Icons.add, color: Colors.white, size: 28),
             )
-          // Regular user: animated Speed Dial FAB
           : const SpeedDialFab(),
       bottomNavigationBar: _buildBottomNavBar(),
     );
   }
 
+  void _openAiAssistant() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AiAssistantSheet(),
+    );
+  }
+
   Widget _buildBottomNavBar() {
-    return Container(
-      margin: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(40),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowMedium,
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+    // Nav items: Home(0), Trips(1), [AI center], Saved(2), Profile(3)
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 20, top: 26),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          // ── Nav Bar Shell (Glass) ──
+          ClipRRect(
+            borderRadius: BorderRadius.circular(36),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: Container(
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.55),
+                  borderRadius: BorderRadius.circular(36),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.8),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 30,
+                      offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF1C6EF2).withOpacity(0.04),
+                      blurRadius: 20,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Home
+                    _buildNavTap(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
+                    // Trips
+                    _buildNavTap(1, Icons.calendar_month_rounded, Icons.calendar_month_outlined, 'Trips'),
+                    // Center placeholder for AI button with label
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          const SizedBox(height: 4),
+                          Text(
+                            'AI',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1C6EF2),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      ),
+                    ),
+                    // Saved
+                    _buildNavTap(2, Icons.favorite_rounded, Icons.favorite_border_rounded, 'Saved'),
+                    // Profile
+                    _buildNavTap(3, Icons.person_rounded, Icons.person_outline_rounded, 'Profile'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ── Floating AI Center Button ──
+          Positioned(
+            top: -22,
+            child: GestureDetector(
+              onTap: _openAiAssistant,
+              child: Container(
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF1C6EF2),
+                      Color(0xFF25AFF4),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1C6EF2).withOpacity(0.45),
+                      blurRadius: 22,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 6),
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF25AFF4).withOpacity(0.25),
+                      blurRadius: 40,
+                      spreadRadius: 4,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.75),
+                    width: 2.5,
+                  ),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Subtle shimmer ring
+                    Container(
+                      width: 62,
+                      height: 62,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(40),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textLight,
-          showSelectedLabels: true,
-          showUnselectedLabels: true,
-          selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-          unselectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
-          elevation: 0,
-          items: [
-            _buildNavItem(Icons.home_rounded, Icons.home_outlined, 0, 'Home'),
-            _buildNavItem(Icons.calendar_month_rounded, Icons.calendar_month_outlined, 1, 'Trips'),
-            _buildNavItem(Icons.favorite_rounded, Icons.favorite_border_rounded, 2, 'Saved'),
-            _buildNavItem(Icons.person_rounded, Icons.person_outline_rounded, 3, 'Profile'),
-          ],
-        ),
       ),
     );
   }
 
-  BottomNavigationBarItem _buildNavItem(
-    IconData activeIcon,
-    IconData inactiveIcon,
-    int index,
-    String label,
-  ) {
+  Widget _buildNavTap(int index, IconData activeIcon, IconData inactiveIcon, String label) {
     final isSelected = _currentIndex == index;
-    return BottomNavigationBarItem(
-      icon: Padding(
-        padding: const EdgeInsets.only(bottom: 4, top: 4),
-        child: Icon(
-          isSelected ? activeIcon : inactiveIcon,
-          size: 24,
-          color: isSelected ? AppColors.primary : AppColors.textLight,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _currentIndex = index),
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                isSelected ? activeIcon : inactiveIcon,
+                size: 24,
+                color: isSelected ? AppColors.primary : AppColors.textLight,
+              ),
+            ),
+            const SizedBox(height: 2),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? AppColors.primary : AppColors.textLight,
+              ),
+              child: Text(label),
+            ),
+          ],
         ),
       ),
-      label: label,
     );
   }
 
@@ -308,13 +432,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     size: 24,
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    'Search cars, brands, or location...',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textLight,
+                  Expanded(
+                    child: Text(
+                      'Search cars, brands, or location...',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textLight,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   Container(
                     width: 40,
                     height: 40,
@@ -527,9 +654,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                           Text(
                             car.brand,
                             style: TextStyle(
@@ -573,6 +701,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ],
                       ),
+                      ),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         decoration: BoxDecoration(
@@ -710,12 +840,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   // Small specs row
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       _buildSpecPill(Icons.settings, car.transmission),
-                      const SizedBox(width: 12),
                       _buildSpecPill(Icons.airline_seat_recline_normal, '${car.seats}'),
-                      const SizedBox(width: 12),
                       _buildSpecPill(Icons.local_gas_station, car.fuelType),
                     ],
                   ),

@@ -329,11 +329,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                   color: AppColors.primary,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  date != null
-                      ? DateFormat('MMM dd, yyyy').format(date)
-                      : 'Select',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Expanded(
+                  child: Text(
+                    date != null
+                        ? DateFormat('MMM dd, yyy').format(date)
+                        : 'Select',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
 import '../services/ai_service.dart';
 
 class AiAssistantSheet extends StatefulWidget {
@@ -62,14 +63,15 @@ class _AiAssistantSheetState extends State<AiAssistantSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
+    return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
-      ),
-      child: Column(
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
+        ),
+        child: Column(
         children: [
           // Drag handle and Title
           const SizedBox(height: 12),
@@ -80,8 +82,8 @@ class _AiAssistantSheetState extends State<AiAssistantSheet> {
               children: [
                 Container(
                    padding: const EdgeInsets.all(8),
-                   decoration: BoxDecoration(color: const Color(0xFF8E2DE2).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                   child: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF8E2DE2), size: 24),
+                   decoration: BoxDecoration(color: const Color(0xFF1C6EF2).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                   child: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF1C6EF2), size: 24),
                 ),
                 const SizedBox(width: 16),
                 const Column(
@@ -114,7 +116,7 @@ class _AiAssistantSheetState extends State<AiAssistantSheet> {
               padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Row(
                 children: [
-                   SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8E2DE2)))),
+                   SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1C6EF2)))),
                    SizedBox(width: 12),
                    Text('AI is thinking...', style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey)),
                 ],
@@ -140,6 +142,8 @@ class _AiAssistantSheetState extends State<AiAssistantSheet> {
                       fillColor: Colors.grey[100],
                       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: AppColors.border)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
                     ),
                   ),
                 ),
@@ -148,10 +152,14 @@ class _AiAssistantSheetState extends State<AiAssistantSheet> {
                   onTap: _sendMessage,
                   child: Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF8E2DE2),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF1C6EF2), Color(0xFF25AFF4)],
+                      ),
                       shape: BoxShape.circle,
-                      boxShadow: [BoxShadow(color: Color(0xFF8E2DE2), blurRadius: 8, offset: Offset(0, 2))],
+                      boxShadow: [BoxShadow(color: Color(0xFF1C6EF2), blurRadius: 8, offset: Offset(0, 2))],
                     ),
                     child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                   ),
@@ -160,6 +168,7 @@ class _AiAssistantSheetState extends State<AiAssistantSheet> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -173,7 +182,7 @@ class _AiAssistantSheetState extends State<AiAssistantSheet> {
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isAi ? Colors.grey[100] : const Color(0xFF8E2DE2),
+          color: isAi ? Colors.grey[100] : const Color(0xFF1C6EF2),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(20),
             topRight: const Radius.circular(20),

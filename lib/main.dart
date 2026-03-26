@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'app/app.dart';
 import 'core/constants/app_colors.dart';
@@ -25,6 +26,9 @@ void main() async {
 
       // ── Feature 8: Initialize local notifications ────────────
       await NotificationService.initialize();
+
+      // ── Load Environment Variables ────────
+      await dotenv.load(fileName: ".env");
 
       // Set up Flutter error handling
       FlutterError.onError = (FlutterErrorDetails details) {

@@ -327,8 +327,8 @@ class BookingCard extends ConsumerWidget {
                             context,
                             title: 'Cancel Booking',
                             message: 'Cancel your booking for ${booking.carName}?',
-                            confirmText: 'Yes, Cancel',
-                            cancelText: 'Keep Booking',
+                            confirmText: 'Cancel',
+                            cancelText: 'Keep',
                             icon: Icons.cancel_outlined,
                           );
                           if (confirmed && context.mounted) {
@@ -669,15 +669,18 @@ class BookingDateTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-               date,
-               style: const TextStyle(
-                 color: AppColors.textPrimary,
-                 fontWeight: FontWeight.bold,
-                 fontSize: 15,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                 date,
+                 style: const TextStyle(
+                   color: AppColors.textPrimary,
+                   fontWeight: FontWeight.bold,
+                   fontSize: 15,
+                 ),
                ),
-               overflow: TextOverflow.ellipsis,
-             ),
+            ),
           ],
         ),
       ),

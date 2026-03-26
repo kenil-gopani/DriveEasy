@@ -165,7 +165,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             
             // Bottom Section
             Container(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
               child: Column(
                 children: [
                   SmoothPageIndicator(
@@ -227,84 +227,88 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   Widget _buildPageContent(OnboardingData data) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Icon Section
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 224,
-              height: 224,
-              decoration: BoxDecoration(
-                color: data.color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-            ),
-            Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: data.gradient,
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: data.color.withOpacity(0.4),
-                    blurRadius: 30,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Icon(data.icon, size: 84, color: Colors.white),
-            ),
-          ],
-        ),
-        
-        const SizedBox(height: 48),
-        
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 12),
+          // Icon Section
+          Stack(
+            alignment: Alignment.center,
             children: [
-              Text(
-                data.title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.5,
+              Container(
+                width: 170,
+                height: 170,
+                decoration: BoxDecoration(
+                  color: data.color.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                data.description,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textSecondary,
-                  height: 1.5,
+              Container(
+                width: 136,
+                height: 136,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: data.gradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: data.color.withOpacity(0.4),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
+                child: Icon(data.icon, size: 64, color: Colors.white),
               ),
             ],
           ),
-        ),
-        
-        const SizedBox(height: 32),
-        
-        // Features
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          alignment: WrapAlignment.center,
-          children: data.features.map((f) => _buildFeatureChip(f, data.color)).toList(),
-        ),
-      ],
+          
+          const SizedBox(height: 32),
+          
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              children: [
+                Text(
+                  data.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  data.description,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Features
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: data.features.map((f) => _buildFeatureChip(f, data.color)).toList(),
+          ),
+        ],
+      ),
     );
   }
 

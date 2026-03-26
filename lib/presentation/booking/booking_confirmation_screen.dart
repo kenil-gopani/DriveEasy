@@ -52,10 +52,15 @@ class _BookingConfirmationScreenState
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // ── Animated checkmark ────────────────────────────
               AnimatedBuilder(
@@ -204,6 +209,10 @@ class _BookingConfirmationScreenState
               ),
             ],
           ),
+        ),
+              ),
+            );
+          },
         ),
       ),
     );
