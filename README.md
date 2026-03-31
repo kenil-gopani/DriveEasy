@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/images/logo.png" width="200" alt="DriveEasy Logo">
+  <img src="assets/images/black_car.png" width="300" alt="DriveEasy Logo">
 </p>
 
 # 🏎️ DriveEasy — Premium Car Rental Solution
