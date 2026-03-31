@@ -35,7 +35,7 @@ import '../presentation/admin/admin_car_list_screen.dart';
 import '../presentation/home/news_feed_screen.dart';
 import '../presentation/home/gallery_screen.dart';
 import '../presentation/home/camera_screen.dart';
-import '../presentation/notifications/notifications_demo_screen.dart';
+
 
 // Route paths
 class AppRoutes {
@@ -71,17 +71,27 @@ class AppRoutes {
   static const String newsFeed = '/news-feed';
   static const String gallery = '/gallery';
   static const String camera = '/camera';
-  static const String notificationsDemo = '/notifications-demo';
+
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
-  final currentUser = ref.watch(currentUserProvider).valueOrNull;
-
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: true,
     redirect: (context, state) {
+      // Read states directly here. Because GoRouter calls redirect on refresh,
+      // it will always have the freshest data without rebuilding the whole router.
+      final authState = ref.read(authStateProvider);
+      final currentUser = ref.read(currentUserProvider).valueOrNull;
+
+      // Force the Splash Screen while app is initializing
+      if (authState.isLoading) {
+        if (state.matchedLocation != AppRoutes.splash) {
+          return AppRoutes.splash;
+        }
+        return null;
+      }
+
       final isLoggedIn = authState.valueOrNull != null;
       final isAuthRoute =
           state.matchedLocation == AppRoutes.login ||
@@ -93,7 +103,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isCompleteProfile =
           state.matchedLocation == AppRoutes.completeProfile;
 
-      // Don't redirect from splash - let it handle its own logic
+      // Don't redirect from splash - let it handle its own logic (delay)
       if (isSplash) return null;
 
       // If not logged in and trying to access protected route
@@ -268,12 +278,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.camera,
         builder: (context, state) => const CameraScreen(),
       ),
-      GoRoute(
-        path: AppRoutes.notificationsDemo,
-        builder: (context, state) => const NotificationsDemoScreen(),
-      ),
+
     ],
     errorBuilder: (context, state) =>
         Scaffold(body: Center(child: Text('Page not found: ${state.uri}'))),
   );
+
+  // Trigger router refresh when auth state changes
+  // Using ref.listen avoids recreating the GoRouter instance
+  ref.listen(authStateProvider, (_, __) => router.refresh());
+  ref.listen(currentUserProvider, (_, __) => router.refresh());
+
+  return router;
 });

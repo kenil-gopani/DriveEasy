@@ -16,12 +16,15 @@ class UserModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  static const String defaultProfilePhoto =
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSo-CON10iTJtYDCxXzzQCH9P1PgUdqGh9Nsg&s';
+
   UserModel({
     required this.uid,
     required this.name,
     required this.email,
     required this.phone,
-    this.photoUrl = '',
+    this.photoUrl = defaultProfilePhoto,
     this.role = 'user',
     this.profileComplete = false,
     required this.createdAt,
@@ -34,7 +37,7 @@ class UserModel {
       name: map['name'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
-      photoUrl: map['photoUrl'] ?? '',
+      photoUrl: map['photoUrl'] ?? defaultProfilePhoto,
       role: map['role'] ?? 'user',
       profileComplete: map['profileComplete'] ?? false,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),

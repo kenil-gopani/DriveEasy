@@ -96,21 +96,12 @@ class ProfileScreen extends ConsumerWidget {
                         ],
                       ),
                       child: ClipOval(
-                        child: userData.photoUrl.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: userData.photoUrl,
-                                fit: BoxFit.cover,
-                              )
-                            : Center(
-                                child: Text(
-                                  userData.name.isNotEmpty ? userData.name[0].toUpperCase() : '?',
-                                  style: const TextStyle(
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                              ),
+                        child: CachedNetworkImage(
+                          imageUrl: userData.photoUrl.isNotEmpty
+                              ? userData.photoUrl
+                              : UserModel.defaultProfilePhoto,
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                     // Online Status Dot
@@ -244,12 +235,7 @@ class ProfileScreen extends ConsumerWidget {
                     title: AppStrings.notifications,
                     onTap: () => context.push(AppRoutes.notifications),
                   ),
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.notifications_active_outlined,
-                    title: 'Notification Demo',
-                    onTap: () => context.push(AppRoutes.notificationsDemo),
-                  ),
+
                   _buildMenuItem(
                     context,
                     icon: Icons.settings_outlined,
@@ -277,7 +263,7 @@ class ProfileScreen extends ConsumerWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.article_outlined,
-                    title: 'Car Tips & News',
+                    title: 'Driving Tips',
                     onTap: () => context.push(AppRoutes.newsFeed),
                   ),
                   _buildMenuItem(

@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:io';
 import '../../data/datasources/user_datasource.dart';
 import '../../data/datasources/notification_datasource.dart';
 import '../../data/models/user_model.dart';
@@ -53,19 +52,6 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<void>> {
         user.copyWith(updatedAt: DateTime.now()),
       );
       state = const AsyncValue.data(null);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      rethrow;
-    }
-  }
-
-  Future<String> uploadAndUpdatePhoto(String uid, File file) async {
-    state = const AsyncValue.loading();
-    try {
-      final photoUrl = await _userDatasource.uploadProfilePhoto(uid, file);
-      await _userDatasource.updateProfilePhoto(uid, photoUrl);
-      state = const AsyncValue.data(null);
-      return photoUrl;
     } catch (e, st) {
       state = AsyncValue.error(e, st);
       rethrow;

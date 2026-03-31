@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
@@ -13,6 +11,7 @@ import '../../core/widgets/primary_button.dart';
 import '../../core/widgets/loading_overlay.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
+import '../../data/models/user_model.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -25,7 +24,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
-  File? _selectedImage;
+  late TextEditingController _photoUrlController;
   bool _isLoading = false;
 
   @override
@@ -34,52 +33,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final user = ref.read(currentUserProvider).valueOrNull;
     _nameController = TextEditingController(text: user?.name ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
+    _photoUrlController = TextEditingController(text: user?.photoUrl ?? '');
+    _photoUrlController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _photoUrlController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final result = await showModalBottomSheet<XFile?>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Take Photo'),
-              onTap: () async {
-                Navigator.pop(
-                  context,
-                  await picker.pickImage(source: ImageSource.camera),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from Gallery'),
-              onTap: () async {
-                Navigator.pop(
-                  context,
-                  await picker.pickImage(source: ImageSource.gallery),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
 
-    if (result != null) {
-      setState(() => _selectedImage = File(result.path));
-    }
-  }
 
   Future<void> _updateProfile() async {
     if (!_formKey.currentState!.validate()) return;
@@ -90,14 +56,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final user = ref.read(currentUserProvider).valueOrNull;
       if (user == null) throw Exception('User not found');
 
-      // Upload photo if selected
-      String? photoUrl;
-      if (_selectedImage != null) {
-        photoUrl = await ref
-            .read(userProfileNotifierProvider.notifier)
-            .uploadAndUpdatePhoto(user.uid, _selectedImage!);
-      }
-
       // Update profile
       await ref
           .read(userProfileNotifierProvider.notifier)
@@ -105,7 +63,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             user.copyWith(
               name: _nameController.text.trim(),
               phone: _phoneController.text.trim(),
-              photoUrl: photoUrl ?? user.photoUrl,
+              photoUrl: _photoUrlController.text.trim(),
             ),
           );
 
@@ -160,50 +118,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         child: CircleAvatar(
                           radius: 60,
                           backgroundColor: AppColors.darkSurface,
-                          backgroundImage: _selectedImage != null
-                              ? FileImage(_selectedImage!)
-                              : (user?.photoUrl.isNotEmpty == true
-                                  ? CachedNetworkImageProvider(user!.photoUrl)
-                                  : null) as ImageProvider?,
-                          child: _selectedImage == null &&
-                                  (user?.photoUrl ?? '').isEmpty
-                              ? Text(
-                                  user?.name.isNotEmpty == true
-                                      ? user!.name[0].toUpperCase()
-                                      : '?',
-                                  style: const TextStyle(
-                                    fontSize: 48,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : null,
-                        ),
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: GestureDetector(
-                          onTap: _pickImage,
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.teal,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.scaffoldBackground, width: 3),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.teal.withOpacity(0.4),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                )
-                              ]
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            ),
+                          backgroundImage: CachedNetworkImageProvider(
+                            _photoUrlController.text.trim().isNotEmpty
+                                ? _photoUrlController.text.trim()
+                                : UserModel.defaultProfilePhoto,
                           ),
                         ),
                       ),
@@ -211,6 +129,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 48),
+                // Photo URL field
+                CustomTextField(
+                  label: 'Profile Photo URL',
+                  hint: 'Paste image link here',
+                  controller: _photoUrlController,
+                  prefixIcon: Icons.link_rounded,
+                ),
+                const SizedBox(height: 24),
                 // Name field
                 CustomTextField(
                   label: AppStrings.fullName,
