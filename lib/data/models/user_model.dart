@@ -17,7 +17,7 @@ class UserModel {
   final DateTime updatedAt;
 
   static const String defaultProfilePhoto =
-      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSo-CON10iTJtYDCxXzzQCH9P1PgUdqGh9Nsg&s';
+      'https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=250&h=250&auto=format&fit=crop';
 
   UserModel({
     required this.uid,
