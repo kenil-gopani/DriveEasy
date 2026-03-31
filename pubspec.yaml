@@ -81,12 +81,12 @@ flutter_launcher_icons:
   ios: true
   web:
     generate: true
-    image_path: "assets/images/app_icon.png"
+    image_path: "assets/images/black_car.png"
     background_color: "#1a1a2e"
     theme_color: "#1a1a2e"
-  image_path: "assets/images/app_icon.png"
+  image_path: "assets/images/black_car.png"
   min_sdk_android: 21
   remove_alpha_ios: true
   background_color: "#1a1a2e"
   adaptive_icon_background: "#1a1a2e"
-  adaptive_icon_foreground: "assets/images/app_icon.png"
+  adaptive_icon_foreground: "assets/images/black_car.png"
